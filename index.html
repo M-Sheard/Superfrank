@@ -680,6 +680,7 @@
     <div id="placeZoom" hidden>
       <button type="button" id="zoomIn">Zoom in</button>
       <button type="button" id="zoomOut">Zoom out</button>
+      <button type="button" id="zoomFit">Whole map</button>
     </div>
     <div id="meet" class="meet" hidden>
       <p id="meetTag"></p>
@@ -1394,7 +1395,7 @@
     img.onload = function () { mark(img); };
     img.onerror = function () { mark(img); };
     var ext = (n.indexOf("plate-") === 0 || n === "meadow-ground") ? ".jpg" : ".png";
-    img.src = "img/" + n + ext;
+    img.src = "img/" + n + ext + (n === "plate-garden" ? "?v=wander2" : "");
     if (img.complete) mark(img);
     imgs[n] = img;
   });
@@ -1566,9 +1567,9 @@
       jungle: { x: 1000, y: 700 }
     };
     var spots = {
-      ladybug: [300, 260], butterfly: [2100, 1360], bee: [700, 1560], snail: [1100, 1300],
-      ant: [1200, 960], dragonfly: [300, 960], grasshopper: [1400, 1560], caterpillar: [1000, 360],
-      worm: [2100, 660], moth: [1700, 960], cricket: [800, 760], stickinsect: [800, 1160],
+      ladybug: [617, 197], butterfly: [2161, 1365], bee: [501, 1161], snail: [1705, 1139],
+      ant: [1200, 960], dragonfly: [397, 870], grasshopper: [1669, 1576], caterpillar: [1465, 779],
+      worm: [1342, 252], moth: [478, 1504], cricket: [1828, 417], stickinsect: [1200, 870],
       rabbit: [1457, 525], fox: [2244, 1056], hedgehog: [156, 1047], robin: [1962, 942],
       beetle: [1162, 860], deer: [866, 531], owl: [1216, 429], squirrel: [688, 818],
       badger: [1171, 286], frog: [1445, 798], mouse: [347, 744], duck: [1772, 650],
@@ -1704,7 +1705,7 @@
     applyWild();
   }
   layoutOutdoor();
-  loadFriendSpots();
+  try { localStorage.removeItem("sf-friend-spots"); } catch (err) {}
   var audioCtx = null;
   var musicGain = null;
   var musicTimer = null;
@@ -2024,10 +2025,21 @@
   var placeZoomBox = document.getElementById("placeZoom");
   var placeZoom = 1;
   var pinch = null;
-  var PLACE_KEY = "sf-friend-spots";
+  function baseCam(area) {
+    var sc = (1152 / 1200) * 0.9;
+    var fit = Math.min(viewW / area.w, viewH / area.h);
+    if (sc <= fit) sc = fit * 1.12;
+    return { sc: sc, fit: fit };
+  }
+
+  function minPlaceZoom() {
+    var cam = baseCam(areaNow());
+    if (!cam.sc || !cam.fit) return 0.2;
+    return Math.max(0.05, (cam.fit * 0.98) / cam.sc);
+  }
 
   function setPlaceZoom(z) {
-    placeZoom = clamp(z, 0.55, 2.5);
+    placeZoom = clamp(z, minPlaceZoom(), 2.5);
   }
 
   function touchSpan(touches) {
@@ -2035,28 +2047,21 @@
     return Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
   }
 
-  function loadFriendSpots() {
-    var raw = null;
-    try { raw = JSON.parse(localStorage.getItem(PLACE_KEY) || "null"); } catch (err) { raw = null; }
-    if (!raw) return;
-    ORDER.forEach(function (id) {
-      AREAS[id].creatures.forEach(function (c) {
-        var spot = raw[c.id];
-        if (!spot || typeof spot.x !== "number" || typeof spot.y !== "number") return;
-        c.x = spot.x;
-        c.y = spot.y;
-      });
+  function saveFriendPlace(c) {
+    var x = Math.round(c.x);
+    var y = Math.round(c.y);
+    c.x = x;
+    c.y = y;
+    fetch("/save-friend", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: c.id, x: x, y: y })
+    }).then(function (res) {
+      if (!res.ok) throw new Error("save");
+      setPlaceNote(c.name + " is saved in the game.");
+    }).catch(function () {
+      setPlaceNote(c.name + " is on the screen only. Use the local game so the place is saved in the game file.");
     });
-  }
-
-  function saveFriendSpots() {
-    var data = {};
-    ORDER.forEach(function (id) {
-      AREAS[id].creatures.forEach(function (c) {
-        data[c.id] = { x: Math.round(c.x), y: Math.round(c.y) };
-      });
-    });
-    try { localStorage.setItem(PLACE_KEY, JSON.stringify(data)); } catch (err) {}
   }
 
   function friendAtWorld(wx, wy) {
@@ -2092,12 +2097,21 @@
     return best;
   }
 
+  function setPlaceNote(text) {
+    var note = document.getElementById("placeNote");
+    if (note) note.textContent = text;
+  }
+
   function renderPlaceList() {
     if (!placeMode || !placeList) return;
     placeList.innerHTML = "";
     var title = document.createElement("p");
-    title.textContent = "Drag a friend";
+    title.textContent = "Drag a friend, then let go. That place is saved in the game.";
     placeList.appendChild(title);
+    var note = document.createElement("p");
+    note.id = "placeNote";
+    note.textContent = "Each place is written into the game file.";
+    placeList.appendChild(note);
     areaNow().creatures.forEach(function (c) {
       var btn = document.createElement("button");
       btn.type = "button";
@@ -2138,6 +2152,10 @@
       if (!placeMode) return;
       setPlaceZoom(placeZoom / 1.2);
     });
+    document.getElementById("zoomFit").addEventListener("click", function () {
+      if (!placeMode) return;
+      setPlaceZoom(minPlaceZoom());
+    });
   }
   if (placeBtn) {
     placeBtn.addEventListener("click", function () { setPlaceMode(!placeMode); });
@@ -2175,9 +2193,10 @@
 
   function finishFriendDrag() {
     if (!placeDrag) return;
+    var friend = placeDrag.c;
     placeDrag = null;
-    saveFriendSpots();
     renderPlaceList();
+    saveFriendPlace(friend);
   }
 
   function pinchSpan() {
@@ -2895,16 +2914,6 @@
     if (plate && plate.naturalWidth) {
       g.drawImage(plate, 0, 0, cssW, cssH);
     }
-    if (area.id === "meadow") {
-      g.lineCap = "round";
-      g.lineJoin = "round";
-      g.strokeStyle = "rgba(146, 96, 48, 0.95)";
-      g.lineWidth = Math.max(3, 110 * scale);
-      g.beginPath();
-      g.moveTo(sx(MEADOW_TRACK[0][0]), sy(MEADOW_TRACK[0][1]));
-      for (var pi = 1; pi < MEADOW_TRACK.length; pi++) g.lineTo(sx(MEADOW_TRACK[pi][0]), sy(MEADOW_TRACK[pi][1]));
-      g.stroke();
-    }
     if (!(plate && plate.naturalWidth)) {
       var rects = area.corridors && area.corridors.length ? area.corridors : [{ x: 0, y: 0, w: area.w, h: area.h }];
       g.fillStyle = "#6b4a2a";
@@ -3297,9 +3306,7 @@
 
   function wildCam(area) {
     // 90% of the 140px framing, so Frank is about 126px and a bit more ground shows.
-    var sc = (1152 / 1200) * 0.9;
-    var fit = Math.min(viewW / area.w, viewH / area.h);
-    if (sc <= fit) sc = fit * 1.12;
+    var sc = baseCam(area).sc;
     if (placeMode) sc = sc * placeZoom;
     var worldW = viewW / sc;
     var worldH = viewH / sc;
@@ -3375,26 +3382,9 @@
   }
 
   function drawSignScreen(s) {
-    var cam = wildCam(areaNow());
     var label = s.dir > 0 ? s.text + " →" : s.dir < 0 ? "← " + s.text : s.text + " ↑";
     ctx.save();
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    var fontPx = 16;
-    ctx.font = "800 " + fontPx + "px Nunito, Trebuchet MS, sans-serif";
-    var bw = Math.ceil(ctx.measureText(label).width) + Math.round(fontPx * 1.7);
-    var bh = Math.round(fontPx * 1.85);
-    var postH = Math.round(fontPx * 1.45);
-    var x = cam.ox + s.x * cam.sc;
-    var y = cam.oy + s.y * cam.sc;
-    if (x < -bw || x > viewW + bw || y - bh > viewH + 8 || y + postH < -8) {
-      ctx.restore();
-      return;
-    }
-    if (x - bw / 2 < 8) x = 8 + bw / 2;
-    if (x + bw / 2 > viewW - 8) x = viewW - 8 - bw / 2;
-    if (y - bh - 4 < 8) y = bh + 12;
-    if (y + postH > viewH - 6) y = viewH - 6 - postH;
-    drawWoodSign(x, y, label, fontPx);
+    drawWoodSign(s.x, s.y, label, 28);
     ctx.restore();
   }
 
@@ -4056,32 +4046,6 @@
     return x >= camX - pad && x <= camX + viewW + pad && y >= camY - pad && y <= camY + viewH + pad;
   }
 
-  var MEADOW_TRACK = [
-    [25, 920], [97, 925], [195, 926], [281, 909], [358, 873], [438, 828],
-    [520, 772], [608, 711], [709, 669], [824, 642], [938, 625], [1044, 626],
-    [1144, 632], [1227, 608], [1296, 557], [1344, 500], [1361, 443], [1360, 385],
-    [1361, 333], [1361, 281], [1359, 259], [1356, 293], [1350, 358], [1329, 423],
-    [1286, 494], [1281, 562], [1357, 624], [1474, 680], [1586, 723], [1703, 754],
-    [1812, 781], [1909, 810], [1994, 838], [2061, 867], [2106, 898], [2159, 920],
-    [2250, 925], [2344, 921], [2375, 920]
-  ];
-
-  function drawWornPath() {
-    function stroke(width, color) {
-      ctx.lineWidth = width;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-      ctx.strokeStyle = color;
-      ctx.beginPath();
-      ctx.moveTo(MEADOW_TRACK[0][0], MEADOW_TRACK[0][1]);
-      var i;
-      for (i = 1; i < MEADOW_TRACK.length; i++) ctx.lineTo(MEADOW_TRACK[i][0], MEADOW_TRACK[i][1]);
-      ctx.stroke();
-    }
-    stroke(188, "rgba(154, 132, 62, 0.92)");
-    stroke(108, "rgba(138, 86, 42, 0.96)");
-  }
-
   function drawWild(area, time) {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.fillStyle = area.ground;
@@ -4092,7 +4056,6 @@
     camY = cam.camY;
     var plate = imgs[area.plate];
     if (plate && plate.naturalWidth) ctx.drawImage(plate, 0, 0, area.w, area.h);
-    if (area.id === "meadow") drawWornPath();
     if (area.id === "hollow" && area.trail) {
       var ti;
       for (ti = 0; ti < area.trail.length; ti++) drawPrint(area.trail[ti][0], area.trail[ti][1], 0);
