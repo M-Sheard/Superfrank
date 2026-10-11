@@ -1,0 +1,4589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Superfrank</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%232f6fdf'/%3E%3Ctext x='8' y='12' text-anchor='middle' font-size='11' font-family='sans-serif' fill='white'%3EF%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #3c3126;
+    --cream: #fff6ea;
+    --paper: #fffaf2;
+    --line: #e4c99a;
+    --blue: #2f6fdf;
+    --shadow: 0 8px 18px rgba(72, 46, 18, 0.14);
+    --font: Nunito, "Trebuchet MS", "Segoe UI", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
+    background: #efe2c4;
+    color: var(--ink);
+    font-family: var(--font);
+    overscroll-behavior: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
+  button, p, h1, h2, h3, h4 { user-select: none; }
+  #app {
+    height: 100vh;
+    height: 100dvh;
+    width: 100%;
+    max-width: 980px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    background: var(--cream);
+    overflow: hidden;
+    position: relative;
+  }
+  header {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: max(8px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 10px max(12px, env(safe-area-inset-left));
+    background: var(--cream);
+    border-bottom: 3px solid var(--line);
+    box-shadow: 0 2px 0 rgba(255, 255, 255, 0.65) inset;
+    z-index: 6;
+    position: relative;
+  }
+  .titles { min-width: 0; flex: 1 1 auto; }
+  h1 {
+    margin: 0;
+    font-size: 1.35rem;
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: 0.01em;
+  }
+  #placeName {
+    margin: 2px 0 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #6d5a45;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  #placeName:empty { display: none; }
+  #friendCount {
+    margin: 1px 0 0;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+  #mapBtn {
+    flex: 0 0 auto;
+    background: var(--paper);
+    color: var(--ink);
+    border: 3px solid var(--line);
+    border-radius: 999px;
+    padding: 10px 14px;
+    min-height: 44px;
+    font: inherit;
+    font-weight: 800;
+    cursor: pointer;
+  }
+  #mapSheet {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: 64px;
+    z-index: 5;
+    background: rgba(36, 48, 28, 0.4);
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    padding: 12px;
+    overflow: hidden;
+  }
+  #mapSheet .sheet { overflow-x: hidden; overflow-y: auto; max-width: 100%; }
+  #mapCanvas {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
+    background: #d5e4b0;
+  }
+  #placeBtn {
+    flex: 0 0 auto;
+    background: var(--paper);
+    color: var(--ink);
+    border: 3px solid var(--line);
+    border-radius: 999px;
+    padding: 10px 12px;
+    min-height: 44px;
+    font: inherit;
+    font-weight: 800;
+    cursor: pointer;
+  }
+  #placeBtn[aria-pressed="true"] { background: #ffe3a4; }
+  #journalBtn, #muteBtn, #mapBtn, #placeBtn, #journalBack, #mapBack, #listen, #choices button, .dpad button, #resetJournal, .titleCard button {
+    font-family: var(--font);
+    box-shadow: 0 2px 0 rgba(255, 255, 255, 0.45) inset, 0 3px 0 rgba(90, 60, 24, 0.12);
+  }
+  #journalBtn {
+    flex: 0 0 auto;
+    background: var(--blue);
+    color: white;
+    border: 0;
+    border-radius: 999px;
+    padding: 10px 16px;
+    min-height: 44px;
+    font: inherit;
+    font-weight: 800;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  #muteBtn {
+    flex: 0 0 auto;
+    background: var(--paper);
+    color: var(--ink);
+    border: 3px solid var(--line);
+    border-radius: 999px;
+    padding: 8px 14px;
+    min-height: 44px;
+    font: inherit;
+    font-weight: 800;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  #journalBtn:focus-visible, #muteBtn:focus-visible, .dpad button:focus-visible, #journalBack:focus-visible, #titleScreen button:focus-visible {
+    outline: 3px solid #1d4eaf;
+    outline-offset: 2px;
+  }
+  #stage {
+    flex: 1 1 auto;
+    min-height: 0;
+    min-width: 0;
+    position: relative;
+    overflow: hidden;
+    background: #6db34a;
+    touch-action: none;
+  }
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+    -webkit-touch-callout: none;
+    user-select: none;
+  }
+  #placeList {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 5;
+    width: 138px;
+    max-height: 46%;
+    overflow-y: auto;
+    background: rgba(255, 246, 234, 0.94);
+    border: 2px solid #4a3018;
+    border-radius: 12px;
+    padding: 6px;
+    touch-action: pan-y;
+  }
+  #placeList[hidden] { display: none; }
+  #placeList p {
+    margin: 0 0 4px;
+    font-size: 0.75rem;
+    font-weight: 800;
+  }
+  #placeList button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    margin: 2px 0;
+    padding: 6px 8px;
+    min-height: 32px;
+    border-radius: 8px;
+    border: 1px solid #e4c99a;
+    background: #fffaf2;
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  #placeList button.on { background: #ffe3a4; }
+  #placeZoom {
+    position: absolute;
+    left: 8px;
+    bottom: 8px;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  #placeZoom[hidden] { display: none; }
+  #placeZoom button {
+    min-height: 44px;
+    min-width: 108px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 2px solid #4a3018;
+    background: rgba(255, 246, 234, 0.94);
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: var(--ink);
+    touch-action: manipulation;
+  }
+  #controls {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px max(12px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+    background: var(--cream);
+    border-top: 3px solid var(--line);
+    box-shadow: 0 -2px 0 rgba(255, 255, 255, 0.6) inset;
+    z-index: 2;
+    touch-action: none;
+  }
+  .dpad {
+    display: grid;
+    grid-template-columns: 64px 64px 64px;
+    grid-template-areas:
+      ". up ."
+      "left down right";
+    gap: 8px;
+    touch-action: none;
+    -webkit-touch-callout: none;
+    user-select: none;
+  }
+  .dpad button {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    border: 3px solid var(--line);
+    background: var(--paper);
+    color: var(--ink);
+    font-size: 1.35rem;
+    font-weight: 800;
+    cursor: pointer;
+    touch-action: none;
+    -webkit-touch-callout: none;
+    user-select: none;
+    padding: 0;
+  }
+  .dpad button.on, .dpad button:active { background: #ffe3a4; }
+  .dpad [data-dir="up"] { grid-area: up; }
+  .dpad [data-dir="down"] { grid-area: down; }
+  .dpad [data-dir="left"] { grid-area: left; }
+  .dpad [data-dir="right"] { grid-area: right; }
+  #hint {
+    margin: 0;
+    font-weight: 700;
+    color: #6d5a45;
+    line-height: 1.25;
+    text-align: right;
+    min-width: 0;
+  }
+  .meet {
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    z-index: 3;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 28px),
+      var(--paper);
+    border: 3px solid var(--line);
+    border-radius: 22px;
+    padding: 12px 14px 14px;
+    box-shadow: var(--shadow);
+    max-height: 70%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    touch-action: pan-y;
+  }
+  .meet p { margin: 0; }
+  #meetTag {
+    color: #b47b12;
+    font-weight: 700;
+    font-size: 0.95rem;
+  }
+  #meetTag.cheer { color: #2d7a32; }
+  #meetTag.again { color: #a15a3a; }
+  #meetName {
+    margin: 0 0 4px;
+    font-size: clamp(1.25rem, 5vw, 1.7rem);
+    font-weight: 800;
+    line-height: 1.15;
+  }
+  #meetAsk {
+    font-size: 1.15rem;
+    font-weight: 700;
+    line-height: 1.3;
+    margin: 2px 0 8px;
+  }
+  #meetAsk:empty, #meetFact:empty, #meetTag:empty, #meetWord:empty, #slots:empty, #choices:empty { display: none; }
+  #listen {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    min-height: 52px;
+    margin: 0 0 8px;
+    border: 0;
+    border-radius: 14px;
+    background: var(--blue);
+    color: white;
+    font: inherit;
+    font-size: 1.2rem;
+    font-weight: 700;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  #meetWord {
+    margin: 2px 0 4px;
+    text-align: center;
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+  }
+  #pips {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 5px;
+    margin: 0 0 8px;
+    max-width: 100%;
+  }
+  #pips:empty { display: none; }
+  #pips i {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: block;
+    flex: 0 0 auto;
+  }
+  #pips i.gone { opacity: 0.28; }
+  #pips .gap { width: 12px; height: 16px; flex: 0 0 auto; }
+  #slots {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    margin: 0 0 8px;
+    max-width: 100%;
+  }
+  .slot {
+    width: clamp(28px, 8.2vw, 48px);
+    height: clamp(36px, 10vw, 52px);
+    border: 3px solid var(--line);
+    border-radius: 12px;
+    background: #fffdf8;
+    box-shadow: 0 2px 0 rgba(180, 140, 70, 0.18);
+    font-size: clamp(1rem, 4vw, 1.5rem);
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+  }
+  #choices {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    max-width: 100%;
+  }
+  #choices button {
+    flex: 1 1 64px;
+    max-width: 76px;
+    min-height: 52px;
+    border-radius: 16px;
+    border: 3px solid var(--line);
+    background: var(--paper);
+    color: var(--ink);
+    font: inherit;
+    font-size: 1.45rem;
+    font-weight: 800;
+    cursor: pointer;
+    touch-action: manipulation;
+    padding: 6px 4px;
+  }
+  #choices button:disabled { opacity: 0.35; }
+  #choices button.undo {
+    flex: 1 1 120px;
+    max-width: 140px;
+    font-size: 1.15rem;
+    background: #fff3d6;
+  }
+  #choices button.ready {
+    flex: 1 1 100%;
+    max-width: none;
+    min-height: 52px;
+    background: var(--blue);
+    color: white;
+    border: 0;
+    font-size: 1.2rem;
+  }
+  #meetFact {
+    font-size: 1.05rem;
+    line-height: 1.35;
+    margin-top: 6px;
+  }
+  #journal {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: 64px;
+    z-index: 5;
+    background: rgba(36, 48, 28, 0.4);
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    padding: 12px;
+  }
+  [hidden] { display: none !important; }
+  .sheet {
+    width: min(460px, 100%);
+    max-height: 100%;
+    overflow: auto;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0) 36px),
+      var(--paper);
+    border: 3px solid var(--line);
+    border-radius: 22px;
+    padding: 14px 14px 18px;
+    box-shadow: var(--shadow);
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+  }
+  .sheetHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    position: sticky;
+    top: -14px;
+    background: var(--paper);
+    padding-bottom: 8px;
+  }
+  .sheetHead h2 { margin: 0; font-size: 1.5rem; font-weight: 800; }
+  #journalBack, #mapBack {
+    font: inherit;
+    font-weight: 700;
+    border: 0;
+    background: var(--blue);
+    color: white;
+    border-radius: 999px;
+    padding: 8px 14px;
+    cursor: pointer;
+  }
+  .lead { margin: 4px 0 8px; font-weight: 700; font-size: 1.05rem; }
+  #journalBody h3 {
+    margin: 14px 0 6px;
+    font-size: 0.95rem;
+    color: #7a6248;
+  }
+  #journalBody article {
+    background: #fffdf8;
+    border: 2px solid #f0e2c4;
+    border-radius: 16px;
+    padding: 8px 10px;
+    margin: 8px 0;
+    box-shadow: 0 3px 0 rgba(180, 140, 70, 0.12);
+  }
+  #journalBody h4 { margin: 0; font-size: 1.12rem; }
+  #journalBody article p { margin: 3px 0 0; line-height: 1.35; }
+  .guide {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    min-width: 0;
+  }
+  .guide .text { min-width: 0; flex: 1 1 auto; }
+  .guide img, .guide .blank {
+    width: 72px;
+    height: 72px;
+    flex: 0 0 auto;
+    border-radius: 12px;
+    background: #f6f1e6;
+    object-fit: contain;
+  }
+  .guide img.ghost {
+    opacity: 0.24;
+    filter: grayscale(1) contrast(0.8);
+    background: transparent;
+  }
+  .guide .blank { border: 2px dashed #d9c7a4; }
+  .stamp, .placeStamp {
+    display: inline-block;
+    margin-left: 6px;
+    border: 2px solid #2d7a32;
+    color: #2d7a32;
+    font-weight: 700;
+    font-size: 0.78rem;
+    line-height: 1.2;
+    border-radius: 999px;
+    padding: 1px 7px;
+    transform: rotate(-8deg);
+  }
+  .none { margin: 0 0 4px; color: #8a7764; }
+  .dev {
+    margin-top: 18px;
+    border-top: 2px solid var(--line);
+    padding-top: 6px;
+    max-width: 100%;
+  }
+  .dev summary {
+    cursor: pointer;
+    font-weight: 700;
+    color: #8a7764;
+    font-size: 0.95rem;
+    padding: 12px 2px;
+    min-height: 44px;
+  }
+  #resetJournal {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    margin: 8px 0 4px;
+    min-height: 52px;
+    font: inherit;
+    font-weight: 700;
+    font-size: 1.1rem;
+    border-radius: 14px;
+    border: 3px solid #e0cfae;
+    background: white;
+    color: var(--ink);
+    cursor: pointer;
+  }
+  #titleScreen {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 76px 16px 20px;
+    align-items: flex-end;
+    background: #cfe6b0;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+  #titleBackdrop {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+  }
+  #titleScreen[hidden] { display: none !important; }
+  .titleCard {
+    position: relative;
+    z-index: 1;
+    width: min(420px, 100%);
+    max-height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    min-height: 0;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0) 42px),
+      var(--paper);
+    border: 3px solid var(--line);
+    border-radius: 28px;
+    padding: 18px 16px 16px;
+    box-shadow: var(--shadow);
+  }
+  .titleCard h2 {
+    margin: 0;
+    flex: 0 0 auto;
+    font-size: clamp(2rem, 8vw, 3rem);
+    font-weight: 800;
+    letter-spacing: 0.02em;
+  }
+  .titleCard img {
+    flex: 1 1 auto;
+    min-height: 0;
+    width: auto;
+    max-width: 70%;
+    max-height: min(24svh, 200px);
+    object-fit: contain;
+  }
+  .parentControl {
+    width: 100%;
+    flex: 0 0 auto;
+  }
+  .parentControl summary {
+    cursor: pointer;
+    text-align: center;
+    font-weight: 700;
+    color: #8a7764;
+    font-size: 0.95rem;
+    padding: 4px 2px 2px;
+    list-style: none;
+  }
+  .parentControl summary::-webkit-details-marker { display: none; }
+  .titleCard button {
+    flex: 0 0 auto;
+    width: 100%;
+    min-height: 52px;
+    border: 0;
+    border-radius: 16px;
+    background: var(--blue);
+    color: white;
+    font: inherit;
+    font-size: 1.25rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  #continueGame {
+    background: var(--paper);
+    color: var(--ink);
+    border: 3px solid var(--line);
+  }
+  #continueGame:disabled { opacity: 0.45; cursor: default; }
+  @media (max-width: 380px) {
+    .dpad { grid-template-columns: 58px 58px 58px; gap: 6px; }
+    .dpad button { width: 58px; height: 58px; }
+    h1 { font-size: 1.15rem; }
+    #hint { font-size: 0.85rem; }
+    #journalBtn, #muteBtn, #placeBtn { padding-left: 10px; padding-right: 10px; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="titles">
+      <h1>Superfrank</h1>
+      <p id="placeName"></p>
+      <p id="friendCount" hidden>0 of 24.</p>
+    </div>
+    <button type="button" id="placeBtn" aria-pressed="false">Place</button>
+    <button type="button" id="muteBtn" aria-pressed="false">Sound</button>
+    <button type="button" id="mapBtn" hidden>Map</button>
+    <button type="button" id="journalBtn" aria-expanded="false" aria-controls="journal">Journal</button>
+  </header>
+  <div id="stage">
+    <canvas id="game" width="390" height="400"></canvas>
+    <div id="placeList" hidden></div>
+    <div id="placeZoom" hidden>
+      <button type="button" id="zoomIn">Zoom in</button>
+      <button type="button" id="zoomOut">Zoom out</button>
+    </div>
+    <div id="meet" class="meet" hidden>
+      <p id="meetTag"></p>
+      <h2 id="meetName"></h2>
+      <p id="meetAsk"></p>
+      <div id="pips"></div>
+      <button type="button" id="listen" hidden>Listen</button>
+      <p id="meetWord"></p>
+      <div id="slots"></div>
+      <div id="choices"></div>
+      <p id="meetFact"></p>
+    </div>
+  </div>
+  <div id="controls">
+    <div class="dpad" id="dpad">
+      <button type="button" data-dir="up" aria-label="Walk up">▲</button>
+      <button type="button" data-dir="left" aria-label="Walk left">◀</button>
+      <button type="button" data-dir="down" aria-label="Walk down">▼</button>
+      <button type="button" data-dir="right" aria-label="Walk right">▶</button>
+    </div>
+    <p id="hint">Hold the grass<br>Arrows or WASD</p>
+  </div>
+  <div id="titleScreen">
+    <img id="titleBackdrop" src="img/title-backdrop.webp" alt="">
+    <div class="titleCard">
+      <h2>Superfrank</h2>
+      <img src="img/frank.png" alt="Frank">
+      <button type="button" id="newGame">New game</button>
+      <button type="button" id="continueGame">Continue</button>
+      <details class="parentControl" id="parentControl">
+        <summary>Parent</summary>
+        <button type="button" id="resetJournal">Reset</button>
+      </details>
+    </div>
+  </div>
+  <div id="mapSheet" hidden>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mapTitle">
+      <div class="sheetHead">
+        <h2 id="mapTitle">Map</h2>
+        <button type="button" id="mapBack">Close</button>
+      </div>
+      <canvas id="mapCanvas" width="320" height="240"></canvas>
+    </div>
+  </div>
+  <div id="journal" hidden>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="journalTitle">
+      <div class="sheetHead">
+        <h2 id="journalTitle">Journal</h2>
+        <button type="button" id="journalBack">Back</button>
+      </div>
+      <div id="journalBody"></div>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+  "use strict";
+
+  var SAVE = "superfrank-save-v2";
+  var SAVE_SEEN = "superfrank-seen-v1";
+  var MUTE_KEY = "superfrank-mute";
+  var PATH_Y = 460;
+  var GATE_Y0 = 390;
+  var GATE_Y1 = 530;
+  var SPEED = 210;
+
+  var canvas = document.getElementById("game");
+  var ctx = canvas.getContext("2d");
+  var stage = document.getElementById("stage");
+  var placeName = document.getElementById("placeName");
+  var journalBtn = document.getElementById("journalBtn");
+  var journal = document.getElementById("journal");
+  var journalBody = document.getElementById("journalBody");
+  var journalBack = document.getElementById("journalBack");
+  var meet = document.getElementById("meet");
+  var meetTag = document.getElementById("meetTag");
+  var meetName = document.getElementById("meetName");
+  var meetAsk = document.getElementById("meetAsk");
+  var listenBtn = document.getElementById("listen");
+  var meetWord = document.getElementById("meetWord");
+  var slotsEl = document.getElementById("slots");
+  var choicesEl = document.getElementById("choices");
+  var meetFact = document.getElementById("meetFact");
+  var pipsEl = document.getElementById("pips");
+
+  function creature(id, name, fact, x, h, gate, obstacle, y, side) {
+    var facts = Array.isArray(fact) ? fact : [fact];
+    return {
+      id: id, name: name, fact: facts.join(" "), facts: facts, x: x, y: y || PATH_Y, h: h, img: id,
+      gate: gate || 0, obstacle: obstacle || "", side: !!side, clearing: null
+    };
+  }
+
+  var QUIZ = {
+    ladybug: { kind: "spell", job: "Listen, and spell who is hiding.", say: "bug", word: "BUG", letters: ["B", "U", "G", "A", "T"] },
+    butterfly: { kind: "spell", job: "Listen, and spell who is hiding.", say: "fly", word: "FLY", letters: ["F", "L", "Y", "B", "P"] },
+    bee: { kind: "math", job: "Count the wings.", prompt: "2 wings and 2 wings. How many?", answer: 4, choices: [2, 3, 4, 5], pips: { color: "#f0c14d", groups: [2, 2] } },
+    snail: { kind: "math", job: "Count the shells.", prompt: "How many shells?", answer: 1, choices: [1, 2, 3], pips: { color: "#c9843a", groups: [1] } },
+    ant: { kind: "spell", job: "Listen, and spell who is in the grass.", say: "ant", word: "ANT", letters: ["A", "N", "T", "E", "P"] },
+    rabbit: { kind: "spell", job: "Listen, and spell who is hiding.", say: "rab-bit", word: "RABBIT", letters: ["R", "A", "B", "B", "I", "T", "E", "O"] },
+    fox: { kind: "math", job: "How many berries are left?", prompt: "12 berries. The fox takes 4. How many are left?", answer: 8, choices: [4, 8, 10, 12], pips: { color: "#d64545", groups: [12] } },
+    hedgehog: { kind: "spell", job: "Listen, and spell who is hiding.", say: "hedge-hog", word: "HEDGEHOG", letters: ["H", "E", "D", "G", "E", "H", "O", "G", "L", "P"] },
+    robin: { kind: "math", job: "Add the worms.", prompt: "7 worms and 6 worms. How many?", answer: 13, choices: [11, 12, 13, 14], pips: { color: "#c9843a", groups: [7, 6] } },
+    beetle: { kind: "spell", job: "Listen, and spell who is in the grass.", say: "bee-tle", word: "BEETLE", letters: ["B", "E", "E", "T", "L", "E", "A", "O"] },
+    triceratops: { kind: "math", job: "Count the footprints in groups.", prompt: "2 and 2 and 2 footprints. How many?", answer: 6, choices: [4, 6, 8, 10], pips: { color: "#8d6a42", groups: [2, 2, 2] } },
+    stegosaurus: { kind: "math", job: "Count the plates in groups.", prompt: "5 plates and 2 plates. How many?", answer: 7, choices: [5, 7, 9, 10], pips: { color: "#6f8f4e", groups: [5, 2] } },
+    brachiosaurus: { kind: "math", job: "Count the trees in groups of 2.", prompt: "2 and 2 and 2 and 2 trees. How many?", answer: 8, choices: [4, 6, 8, 10], pips: { color: "#3d9a40", groups: [2, 2, 2, 2] } },
+    ankylosaurus: { kind: "math", job: "Count the groups of spikes.", prompt: "Spikes in groups of 2. How many groups?", answer: 5, choices: [2, 3, 5, 6], pips: { color: "#8d6a42", groups: [2, 2, 2, 2, 2] } },
+    pterosaur: { kind: "math", job: "Count the eggs in groups.", prompt: "10 eggs and 2 eggs. How many?", answer: 12, choices: [8, 10, 12, 15], pips: { color: "#f0d48a", groups: [10, 2] } },
+    lion: { kind: "spell", job: "Listen, and spell who is hiding.", say: "li-on", word: "LION", letters: ["L", "I", "O", "N", "E", "A", "T", "S"] },
+    zebra: { kind: "math", job: "Count the stripes in groups.", prompt: "10 stripes and 10 stripes. How many?", answer: 20, choices: [10, 15, 20, 25], pips: { color: "#2a2a2a", groups: [10, 10] } },
+    giraffe: { kind: "math", job: "How many leaves are left?", prompt: "10 leaves. The giraffe eats 2. How many are left?", answer: 8, choices: [2, 6, 8, 10], pips: { color: "#3d9a40", groups: [10] } },
+    snake: { kind: "spell", job: "Listen, and spell who is hiding.", say: "snake", word: "SNAKE", letters: ["S", "N", "A", "K", "E", "I", "T", "O"] },
+    camel: { kind: "math", job: "Count the pots.", prompt: "10 pots and 5 pots. How many?", answer: 15, choices: [10, 12, 15, 20], pips: { color: "#c9843a", groups: [10, 5] } },
+    dragon: { kind: "spell", job: "Listen, and spell who is hiding.", say: "dra-gon", word: "DRAGON", letters: ["D", "R", "A", "G", "O", "N", "E", "I", "T"] },
+    shark: { kind: "spell", job: "Listen, and spell who is in the pool.", say: "shark", word: "SHARK", letters: ["S", "H", "A", "R", "K", "E", "I", "N"] },
+    junglesnake: { kind: "math", job: "Count the coils in groups.", prompt: "4 coils and 4 coils. How many?", answer: 8, choices: [4, 6, 8, 10], pips: { color: "#2f8a45", groups: [4, 4] } },
+    jungledragon: { kind: "math", job: "Count the scales in groups.", prompt: "2 and 5 and 10 scales. How many?", answer: 17, choices: [15, 17, 20, 25], pips: { color: "#3d9a40", groups: [2, 5, 10] } },
+    dragonfly: { kind: "spell", job: "Listen, and spell the word.", say: "wing", word: "WING", letters: ["W", "I", "N", "G", "A", "T", "S"] },
+    grasshopper: { kind: "math", job: "Count the hops.", prompt: "3 hops and 2 hops. How many?", answer: 5, choices: [3, 4, 5, 6], pips: { color: "#6aaa55", groups: [3, 2] } },
+    caterpillar: { kind: "spell", job: "Listen, and spell the word.", say: "leaf", word: "LEAF", letters: ["L", "E", "A", "F", "B", "T", "S"] },
+    worm: { kind: "math", job: "Count the worms.", prompt: "How many worms?", answer: 2, choices: [1, 2, 3], pips: { color: "#e7a0a0", groups: [2] } },
+    moth: { kind: "spell", job: "Listen, and spell the word.", say: "moth", word: "MOTH", letters: ["M", "O", "T", "H", "A", "L", "P"] },
+    cricket: { kind: "math", job: "Count the feelers.", prompt: "How many feelers?", answer: 2, choices: [1, 2, 4], pips: { color: "#c9843a", groups: [2] } },
+    stickinsect: { kind: "spell", job: "Listen, and spell the word.", say: "twig", word: "TWIG", letters: ["T", "W", "I", "G", "S", "A", "L"] },
+    deer: { kind: "math", job: "Count the deer.", prompt: "5 deer and 5 deer. How many?", answer: 10, choices: [5, 8, 10, 12], pips: { color: "#c9843a", groups: [5, 5] } },
+    owl: { kind: "spell", job: "Listen, and spell the word.", say: "owl", word: "OWL", letters: ["O", "W", "L", "A", "E", "B"] },
+    squirrel: { kind: "spell", job: "Listen, and spell the word.", say: "nut", word: "NUT", letters: ["N", "U", "T", "A", "E", "S"] },
+    badger: { kind: "math", job: "How many worms are left?", prompt: "10 worms. The badger eats 5. How many are left?", answer: 5, choices: [2, 5, 8, 10], pips: { color: "#c9843a", groups: [10] } },
+    frog: { kind: "math", job: "Count the pads.", prompt: "2 and 2 and 2 pads. How many?", answer: 6, choices: [4, 6, 8, 10], pips: { color: "#3d9a40", groups: [2, 2, 2] } },
+    mouse: { kind: "spell", job: "Listen, and spell the word.", say: "mouse", word: "MOUSE", letters: ["M", "O", "U", "S", "E", "A", "T", "L"] },
+    duck: { kind: "math", job: "Count the ducklings.", prompt: "5 ducklings and 2 ducklings. How many?", answer: 7, choices: [5, 7, 9, 10], pips: { color: "#f0c14d", groups: [5, 2] } },
+    diplodocus: { kind: "math", job: "Count the leaves.", prompt: "10 leaves and 5 leaves. How many?", answer: 15, choices: [10, 12, 15, 20], pips: { color: "#3d9a40", groups: [10, 5] } },
+    parasaurolophus: { kind: "math", job: "Count the groups.", prompt: "Bones in groups of 10. How many groups?", answer: 2, choices: [2, 3, 4, 5], pips: { color: "#f0d48a", groups: [10, 10] } },
+    iguanodon: { kind: "math", job: "Count the plants.", prompt: "5 plants and 10 plants. How many?", answer: 15, choices: [10, 12, 15, 20], pips: { color: "#3d9a40", groups: [5, 10] } },
+    compsognathus: { kind: "math", job: "Count the eggs.", prompt: "5 eggs and 5 eggs. How many?", answer: 10, choices: [5, 8, 10, 12], pips: { color: "#f0d48a", groups: [5, 5] } },
+    pachycephalosaurus: { kind: "math", job: "Count the groups.", prompt: "Footprints in groups of 2. How many groups?", answer: 4, choices: [2, 3, 4, 6], pips: { color: "#8d6a42", groups: [2, 2, 2, 2] } },
+    plateosaurus: { kind: "spell", job: "Listen, and spell the word.", say: "plant", word: "PLANT", letters: ["P", "L", "A", "N", "T", "E", "S", "O"] },
+    archaeopteryx: { kind: "math", job: "Count the feathers.", prompt: "10 feathers and 2 feathers. How many?", answer: 12, choices: [8, 10, 12, 15], pips: { color: "#c9843a", groups: [10, 2] } },
+    elephant: { kind: "math", job: "Count the steps.", prompt: "5 and 5 and 10 steps. How many?", answer: 20, choices: [15, 18, 20, 25], pips: { color: "#8d6a42", groups: [5, 5, 10] } },
+    hippo: { kind: "spell", job: "Listen, and spell the word.", say: "hip-po", word: "HIPPO", letters: ["H", "I", "P", "P", "O", "A", "E", "T"] },
+    rhino: { kind: "math", job: "Count the groups.", prompt: "Horns in groups of 2. How many groups?", answer: 3, choices: [2, 3, 4, 5], pips: { color: "#c4a574", groups: [2, 2, 2] } },
+    cheetah: { kind: "math", job: "Count the spots.", prompt: "10 spots and 5 spots. How many?", answer: 15, choices: [10, 12, 15, 20], pips: { color: "#2a2a2a", groups: [10, 5] } },
+    ostrich: { kind: "math", job: "Count the eggs.", prompt: "2 eggs and 10 eggs. How many?", answer: 12, choices: [8, 10, 12, 15], pips: { color: "#f0d48a", groups: [2, 10] } },
+    meerkat: { kind: "math", job: "Count the meerkats.", prompt: "5 and 5 meerkats. How many?", answer: 10, choices: [5, 8, 10, 15], pips: { color: "#c9843a", groups: [5, 5] } },
+    crocodile: { kind: "math", job: "Count the teeth.", prompt: "10 teeth and 10 teeth. How many?", answer: 20, choices: [10, 15, 20, 30], pips: { color: "#f4ead4", groups: [10, 10] } },
+    buffalo: { kind: "math", job: "Count the tufts.", prompt: "10 tufts and 2 tufts. How many?", answer: 12, choices: [8, 10, 12, 15], pips: { color: "#6a9a32", groups: [10, 2] } },
+    flamingo: { kind: "spell", job: "Listen, and spell the word.", say: "pink", word: "PINK", letters: ["P", "I", "N", "K", "A", "E", "L"] },
+    fennec: { kind: "spell", job: "Listen, and spell the word.", say: "ears", word: "EARS", letters: ["E", "A", "R", "S", "T", "O", "L"] },
+    tortoise: { kind: "math", job: "Count the spots.", prompt: "5 spots and 10 spots. How many?", answer: 15, choices: [10, 12, 15, 20], pips: { color: "#6aaa55", groups: [5, 10] } },
+    scorpion: { kind: "math", job: "Count the groups.", prompt: "Legs in groups of 2. How many groups?", answer: 4, choices: [2, 3, 4, 6], pips: { color: "#c9843a", groups: [2, 2, 2, 2] } },
+    lizard: { kind: "spell", job: "Listen, and spell the word.", say: "sun", word: "SUN", letters: ["S", "U", "N", "A", "E", "D"] },
+    hawk: { kind: "math", job: "Count the feathers.", prompt: "5 feathers and 5 feathers. How many?", answer: 10, choices: [5, 8, 10, 12], pips: { color: "#8d6a42", groups: [5, 5] } },
+    jerboa: { kind: "math", job: "Count the hops.", prompt: "10 hops and 2 hops. How many?", answer: 12, choices: [8, 10, 12, 15], pips: { color: "#e7c48a", groups: [10, 2] } },
+    oryx: { kind: "math", job: "Count the stones.", prompt: "10 stones and 10 stones. How many?", answer: 20, choices: [10, 15, 20, 25], pips: { color: "#c4a574", groups: [10, 10] } },
+    sandcat: { kind: "spell", job: "Listen, and spell the word.", say: "paw", word: "PAW", letters: ["P", "A", "W", "E", "L", "S"] },
+    roadrunner: { kind: "math", job: "Count the steps.", prompt: "5 steps and 5 steps and 2 steps. How many?", answer: 12, choices: [8, 10, 12, 15], pips: { color: "#c9843a", groups: [5, 5, 2] } },
+    parrot: { kind: "spell", job: "Listen, and spell the word.", say: "talk", word: "TALK", letters: ["T", "A", "L", "K", "E", "S", "P"] },
+    monkey: { kind: "math", job: "Count the bananas.", prompt: "5 bananas and 5 bananas. How many?", answer: 10, choices: [5, 8, 10, 15], pips: { color: "#f0c14d", groups: [5, 5] } },
+    toucan: { kind: "spell", job: "Listen, and spell the word.", say: "beak", word: "BEAK", letters: ["B", "E", "A", "K", "L", "T", "S"] },
+    tiger: { kind: "math", job: "Count the stripes.", prompt: "10 stripes and 5 stripes. How many?", answer: 15, choices: [10, 12, 15, 20], pips: { color: "#e35d4f", groups: [10, 5] } },
+    sloth: { kind: "math", job: "Count the leaves.", prompt: "10 leaves and 10 leaves. How many?", answer: 20, choices: [10, 15, 20, 25], pips: { color: "#3d9a40", groups: [10, 10] } },
+    chameleon: { kind: "spell", job: "Listen, and spell the word.", say: "hide", word: "HIDE", letters: ["H", "I", "D", "E", "A", "T", "S"] },
+    lemur: { kind: "math", job: "Count the fruits.", prompt: "5 fruits and 10 fruits. How many?", answer: 15, choices: [10, 12, 15, 20], pips: { color: "#e35d4f", groups: [5, 10] } },
+    jaguar: { kind: "math", job: "Count the spots.", prompt: "10 spots and 2 spots. How many?", answer: 12, choices: [8, 10, 12, 15], pips: { color: "#f0c14d", groups: [10, 2] } },
+    capybara: { kind: "math", job: "Count the groups.", prompt: "Pads in groups of 5. How many groups?", answer: 3, choices: [2, 3, 5, 6], pips: { color: "#6aaa55", groups: [5, 5, 5] } }
+  };
+
+  function exitsWest(to, sx) {
+    return { side: "west", y0: GATE_Y0, y1: GATE_Y1, to: to, sx: sx, sy: PATH_Y };
+  }
+  function exitsEast(to, sx) {
+    return { side: "east", y0: GATE_Y0, y1: GATE_Y1, to: to, sx: sx, sy: PATH_Y };
+  }
+  function exitsNorth(to, sx, sy, x0, x1) {
+    return { side: "north", x0: x0, x1: x1, to: to, sx: sx, sy: sy };
+  }
+
+  var AREAS = {
+    garden: {
+      id: "garden",
+      title: "Garden",
+      w: 2400,
+      h: 1800,
+      seed: 11,
+      ground: "#67b348",
+      groundAlt: "#8dcc62",
+      tuft: "#3e8a32",
+      flowerColors: ["#f48caf", "#ffd15c", "#c89bff", "#fff4b0", "#ff9a6b"],
+      kind: "garden",
+      wall: "#1e6a30",
+      path: "#e2c088",
+      pathIn: "#f6e4b8",
+      exits: [exitsEast("meadow", 160)],
+      signs: [
+        { x: 2220, y: 600, text: "Meadow", dir: 1 }
+      ],
+      blocks: [],
+      habitats: [
+        { kind: "flowers", x: 180, y: 60, w: 460, h: 280, wash: "#ffe7a8", color: "#ffd15c" },
+        { kind: "flowers", x: 1580, y: 60, w: 420, h: 260, wash: "#ffd0e0", color: "#f48caf" },
+        { kind: "nest", x: 1620, y: 1200, w: 360, h: 220, wash: "#e7c99a", color: "#a97444" },
+        { kind: "grass", x: 80, y: 900, w: 280, h: 220, wash: "#c6e8a4", color: "#3e8a32" }
+      ],
+      creatures: [
+        creature("ladybug", "Ladybug", ["Ladybugs eat bugs that hurt plants.", "Bright colors warn birds to leave them alone.", "One ladybug can eat many aphids in a day."], 250, 78, 0, "", 150),
+        creature("butterfly", "Butterfly", ["Butterflies taste with their feet.", "Their wings are covered in tiny scales.", "A butterfly drinks through a long tongue."], 450, 96, 0, "", 130),
+        creature("bee", "Bee", ["Bees dance to point to flowers.", "A honeybee has five eyes.", "Bees carry pollen on their back legs."], 350, 88, 0, "", 260),
+        creature("snail", "Snail", ["A snail's shell is its home.", "A snail moves on one wide foot.", "Its eyes sit on the longer tentacles."], 1680, 72, 0, "", 1280),
+        creature("ant", "Ant", ["Ants carry food home in a line.", "Ants can lift many times their own weight.", "The ants in a nest are one family."], 200, 70, 0, "", 1000, true),
+        creature("dragonfly", "Dragonfly", ["A dragonfly has two pairs of wings.", "It can hover and fly backwards.", "Dragonflies catch insects while flying."], 580, 84, 0, "", 170),
+        creature("grasshopper", "Grasshopper", ["A grasshopper jumps with long back legs.", "It hears with tiny ears on its body.", "Grasshoppers eat leaves."], 260, 76, 0, "", 300),
+        creature("caterpillar", "Caterpillar", ["A caterpillar is a young butterfly or moth.", "It eats leaves and grows very fast.", "Then it changes inside a chrysalis or cocoon."], 1760, 68, 0, "", 280),
+        creature("worm", "Worm", ["An earthworm eats soil and dead leaves.", "Worms help garden soil stay healthy.", "A worm has no bones."], 1920, 60, 0, "", 1380),
+        creature("moth", "Moth", ["Many moths fly at night.", "A moth's wings are covered in tiny scales.", "Some moths can smell flowers from far away."], 1660, 80, 0, "", 140),
+        creature("cricket", "Cricket", ["A cricket chirps by rubbing its wings.", "Crickets have long feelers.", "They like to hide in grass."], 1900, 74, 0, "", 160),
+        creature("stickinsect", "Stick insect", ["A stick insect looks like a twig.", "That shape helps it hide from birds.", "Stick insects eat leaves."], 1760, 96, 0, "", 1500)
+      ]
+    },
+    meadow: {
+      id: "meadow",
+      title: "Meadow",
+      w: 2400,
+      h: 1800,
+      seed: 29,
+      ground: "#b7c85a",
+      groundAlt: "#d5e07a",
+      tuft: "#6a9a32",
+      flowerColors: ["#ff8fab", "#ffe27a", "#ffffff", "#d7a2ff", "#ffb15a", "#9ad0ff"],
+      kind: "meadow",
+      wall: "#2a6234",
+      path: "#efe6b0",
+      pathIn: "#fbf6d4",
+      exits: [exitsWest("garden", 2220), exitsEast("hollow", 160), exitsNorth("safari", 160, PATH_Y, 1160, 1320)],
+      signs: [
+        { x: 110, y: 600, text: "Garden", dir: -1 },
+        { x: 2000, y: 600, text: "Dinosaurs", dir: 1 },
+        { x: 1410, y: 70, text: "Safari", dir: 0 }
+      ],
+      blocks: [],
+      habitats: [
+        { kind: "grass", x: 200, y: 60, w: 520, h: 280, wash: "#e4f0a8", color: "#6a9a32" },
+        { kind: "pond", x: 980, y: 1240, w: 240, h: 180, wash: "#9ed8ea", color: "#3e8eb0" },
+        { kind: "grass", x: 1760, y: 50, w: 460, h: 280, wash: "#e4f0a8", color: "#7aaa42" }
+      ],
+      creatures: [
+        creature("rabbit", "Rabbit", ["Long ears help a rabbit hear.", "A rabbit's teeth never stop growing.", "Rabbits eat grass."], 280, 100, 0, "", 150),
+        creature("fox", "Fox", ["A fox hears tiny sounds.", "A fox has a bushy tail.", "Foxes can live in fields and woods."], 500, 104, 0, "", 140),
+        creature("hedgehog", "Hedgehog", ["A hedgehog curls into a ball.", "Its spines protect it.", "Hedgehogs hunt at night."], 760, 90, 0, "", 1500),
+        creature("robin", "Robin", ["A robin sings, this spot is mine.", "A robin's breast is orange-red.", "Robins eat worms and insects."], 2060, 84, 0, "", 150),
+        creature("beetle", "Beetle", ["A beetle's shell is hard.", "The hard wings cover softer flying wings.", "Beetles are a kind of insect."], 2000, 74, 0, "", 300, true),
+        creature("deer", "Deer", ["A deer can run very fast.", "Many male deer grow antlers.", "Deer eat grass and leaves."], 380, 120, 0, "", 280),
+        creature("owl", "Owl", ["An owl hunts at night.", "Its eyes face forward.", "Soft feathers help an owl fly quietly."], 1840, 100, 0, "", 130),
+        creature("squirrel", "Squirrel", ["A squirrel stores nuts for later.", "It has a big bushy tail.", "Squirrels are good climbers."], 680, 90, 0, "", 200),
+        creature("badger", "Badger", ["A badger digs a home called a sett.", "Badgers come out mostly at night.", "They eat worms and insects."], 1920, 96, 0, "", 270),
+        creature("frog", "Frog", ["A frog starts life as a tadpole.", "Frogs can jump a long way.", "Many frogs live near water."], 640, 80, 0, "", 1260),
+        creature("mouse", "Mouse", ["A mouse has sharp front teeth that keep growing.", "Whiskers help it feel in the dark.", "Mice eat seeds and grains."], 2140, 64, 0, "", 210),
+        creature("duck", "Duck", ["A duck's feet are webbed for swimming.", "Duck feathers can stay dry in water.", "Ducklings follow their mother."], 920, 90, 0, "", 1360)
+      ]
+    },
+    hollow: {
+      id: "hollow",
+      title: "Dinosaur hollow",
+      w: 2400,
+      h: 1800,
+      seed: 47,
+      ground: "#e4c48a",
+      groundAlt: "#efd7a4",
+      tuft: "#c49a58",
+      flowerColors: ["#8fbf62", "#6aaa55"],
+      kind: "hollow",
+      wall: "#7a5a3a",
+      path: "#f3e0b8",
+      pathIn: "#fff3dc",
+      exits: [exitsWest("meadow", 2220), exitsEast("museum", 180)],
+      signs: [
+        { x: 110, y: 760, text: "Meadow", dir: -1 },
+        { x: 2300, y: 600, text: "Museum", dir: 1 }
+      ],
+      blocks: [],
+      trail: [[2080, 520], [2080, 460], [2080, 400], [2080, 340], [2080, 280], [2080, 220]],
+      habitats: [
+        { kind: "ferns", x: 740, y: 50, w: 520, h: 280, wash: "#c5d68a", color: "#5a8a3a" },
+        { kind: "bones", x: 140, y: 860, w: 420, h: 240, wash: "#efd7a8", color: "#f4ead4" },
+        { kind: "bones", x: 1320, y: 1180, w: 360, h: 200, wash: "#efd7a8", color: "#f4ead4" },
+        { kind: "bones", x: 1900, y: 60, w: 280, h: 180, wash: "#e7d3b0", color: "#f4ead4" }
+      ],
+      creatures: [
+        creature("triceratops", "Triceratops", ["Triceratops had three horns.", "It also had a wide bony frill.", "Triceratops ate plants."], 240, 112, 0, "", 960),
+        creature("stegosaurus", "Stegosaurus", ["Stegosaurus had plates on its back.", "It had spikes on its tail.", "Stegosaurus ate plants."], 500, 100, 0, "", 1060),
+        creature("brachiosaurus", "Brachiosaurus", ["Brachiosaurus ate leaves up high.", "Its front legs were longer than its back legs.", "It was one of the tallest dinosaurs."], 820, 136, 0, "", 140),
+        creature("ankylosaurus", "Ankylosaurus", ["Ankylosaurus had a tail club.", "Bony plates covered its back.", "Ankylosaurus ate low plants."], 340, 86, 0, "", 1200),
+        creature("pterosaur", "Pterosaur", ["This shy one has wings like a cloak.", "Pterosaurs were flying reptiles.", "Their wings were skin stretched on a long finger."], 2080, 84, 0, "", 150, true),
+        creature("diplodocus", "Diplodocus", ["Diplodocus had a very long neck and tail.", "It walked on four legs.", "Diplodocus ate plants."], 1300, 120, 0, "", 180),
+        creature("parasaurolophus", "Parasaurolophus", ["Parasaurolophus had a long crest on its head.", "That crest was hollow.", "It ate plants."], 1100, 110, 0, "", 130),
+        creature("iguanodon", "Iguanodon", ["Iguanodon ate plants.", "It had a spike on each thumb.", "It could walk on two legs or on four."], 960, 110, 0, "", 270),
+        creature("compsognathus", "Compsognathus", ["Compsognathus was a small dinosaur.", "It ran on two legs.", "It ate small animals."], 1700, 70, 0, "", 1400),
+        creature("pachycephalosaurus", "Pachycephalosaurus", ["Pachycephalosaurus had a thick bony dome on its head.", "It walked on two legs.", "It likely ate plants."], 680, 100, 0, "", 940),
+        creature("plateosaurus", "Plateosaurus", ["Plateosaurus ate plants.", "It had a long neck.", "It lived before the biggest long-necked dinosaurs."], 1420, 110, 0, "", 1280),
+        creature("archaeopteryx", "Archaeopteryx", ["Archaeopteryx had feathers and wings.", "It also had teeth and a long bony tail.", "It lived near the time of the first birds."], 1960, 80, 0, "", 260)
+      ]
+    },
+    safari: {
+      id: "safari",
+      title: "Safari",
+      w: 2400,
+      h: 1800,
+      seed: 83,
+      ground: "#c9b15a",
+      groundAlt: "#e0cc78",
+      tuft: "#8a9a3a",
+      flowerColors: ["#ffb15a", "#ffe27a", "#ff8fab", "#ffffff"],
+      kind: "safari",
+      wall: "#6d7a32",
+      path: "#f0d9a0",
+      pathIn: "#fbf0d0",
+      exits: [exitsWest("meadow", 1240), exitsEast("desert", 160)],
+      signs: [
+        { x: 110, y: 600, text: "Meadow", dir: -1 },
+        { x: 2300, y: 600, text: "Desert", dir: 1 }
+      ],
+      blocks: [],
+      habitats: [
+        { kind: "grass", x: 240, y: 60, w: 700, h: 300, wash: "#e6d48a", color: "#8a9a3a" },
+        { kind: "pond", x: 1360, y: 1180, w: 280, h: 200, wash: "#9ed8ea", color: "#3e8eb0" },
+        { kind: "rocks", x: 1660, y: 50, w: 460, h: 260, wash: "#e0cc9a", color: "#b08958" }
+      ],
+      creatures: [
+        creature("lion", "Lion", ["A lion's roar can travel a long way.", "Lions live in groups called prides.", "A male lion grows a mane."], 320, 100, 0, "", 160),
+        creature("zebra", "Zebra", ["Every zebra's stripes are different.", "Zebras eat grass.", "They live in herds."], 560, 96, 0, "", 180),
+        creature("giraffe", "Giraffe", ["A giraffe's tongue is long and dark.", "Giraffes are the tallest land animals.", "They eat leaves high in the trees."], 460, 130, 0, "", 280),
+        creature("elephant", "Elephant", ["An elephant's trunk is a long nose and upper lip.", "Elephants live in family herds.", "Their tusks are very long teeth."], 860, 130, 0, "", 150),
+        creature("hippo", "Hippo", ["A hippo spends much of the day in water.", "Its eyes sit high on its head.", "Hippos come out to eat grass."], 1480, 110, 0, "", 1260),
+        creature("rhino", "Rhino", ["A rhino's horn is made of the same stuff as hair.", "Rhinos eat plants.", "They have thick skin."], 1740, 110, 0, "", 140),
+        creature("cheetah", "Cheetah", ["A cheetah is the fastest land animal.", "Its tail helps it turn.", "Cheetahs hunt in the daytime."], 1980, 90, 0, "", 160),
+        creature("ostrich", "Ostrich", ["An ostrich is the largest bird.", "It cannot fly.", "An ostrich can run very fast."], 2040, 120, 0, "", 280),
+        creature("meerkat", "Meerkat", ["Meerkats live in groups.", "One often stands up to watch for danger.", "They eat insects."], 2100, 70, 0, "", 240),
+        creature("crocodile", "Crocodile", ["A crocodile waits quietly in the water.", "Its eyes and nose sit on top of its head.", "Crocodiles eat meat."], 1760, 80, 0, "", 1360),
+        creature("buffalo", "Buffalo", ["These buffalo live in herds.", "They have heavy curved horns.", "Buffalo eat grass."], 720, 110, 0, "", 300),
+        creature("flamingo", "Flamingo", ["A flamingo's pink color comes from its food.", "It often stands in shallow water.", "Flamingos eat tiny water animals."], 1600, 110, 0, "", 1480)
+      ]
+    },
+    desert: {
+      id: "desert",
+      title: "Desert",
+      w: 2400,
+      h: 1800,
+      seed: 91,
+      ground: "#e7c48a",
+      groundAlt: "#f0d7a6",
+      tuft: "#c4a06a",
+      flowerColors: ["#ffb15a", "#ffe27a", "#ffffff"],
+      kind: "desert",
+      wall: "#a06a42",
+      path: "#f6e2bc",
+      pathIn: "#fff6e4",
+      exits: [exitsWest("safari", 2220), exitsEast("jungle", 160)],
+      signs: [
+        { x: 450, y: 600, text: "Safari", dir: -1 },
+        { x: 2020, y: 600, text: "Jungle", dir: 1 }
+      ],
+      blocks: [],
+      habitats: [
+        { kind: "rocks", x: 160, y: 50, w: 520, h: 280, wash: "#f0d7a6", color: "#c4a06a" },
+        { kind: "rocks", x: 1640, y: 50, w: 480, h: 280, wash: "#f0d7a6", color: "#c4a06a" },
+        { kind: "rocks", x: 300, y: 1160, w: 520, h: 240, wash: "#f6e2bc", color: "#d7b56a" }
+      ],
+      creatures: [
+        creature("snake", "Snake", ["A snake smells with its tongue.", "Snakes have no legs.", "Their skin is covered in scales."], 640, 72, 0, "", 200),
+        creature("camel", "Camel", ["A camel stores fat in its hump.", "Camels can go a long time without a drink.", "Wide feet help them walk on sand."], 400, 110, 0, "", 1260),
+        creature("dragon", "Dragon", ["This dragon likes warm sand.", "Dragons in this guide are story friends.", "Real lizards also warm themselves in the sun."], 980, 100, 0, "", 1400),
+        creature("fennec", "Fennec", ["A fennec fox has very large ears.", "Those ears help it lose heat.", "Fennec foxes live in deserts."], 240, 80, 0, "", 150),
+        creature("tortoise", "Tortoise", ["A tortoise carries a hard shell.", "It lives on land and moves slowly.", "Many tortoises eat plants."], 1720, 80, 0, "", 140),
+        creature("scorpion", "Scorpion", ["A scorpion has a stinger on its tail.", "It hunts mostly at night.", "Scorpions are cousins of spiders."], 340, 70, 0, "", 280),
+        creature("lizard", "Lizard", ["A lizard has scaly skin.", "Many lizards warm up in the sun.", "Some can drop the tail to get away."], 460, 70, 0, "", 160),
+        creature("hawk", "Hawk", ["A hawk hunts from the air.", "It has very sharp eyes.", "Hawks eat small animals."], 1920, 90, 0, "", 130),
+        creature("jerboa", "Jerboa", ["A jerboa hops on long back legs.", "It lives in dry places.", "Its long tail helps it balance."], 1780, 70, 0, "", 270),
+        creature("oryx", "Oryx", ["An oryx has long, straight horns.", "It can live where water is scarce.", "Oryx eat grass and leaves."], 700, 110, 0, "", 1200),
+        creature("sandcat", "Sand cat", ["A sand cat has fur on the soles of its paws.", "That fur helps on hot sand.", "Sand cats hunt at night."], 2080, 80, 0, "", 200),
+        creature("roadrunner", "Roadrunner", ["A roadrunner is a bird that likes to run.", "It can fly, but it usually runs.", "Roadrunners eat insects and small lizards."], 1960, 80, 0, "", 300)
+      ]
+    },
+    jungle: {
+      id: "jungle",
+      title: "Jungle",
+      w: 2400,
+      h: 1800,
+      seed: 97,
+      ground: "#2f9a48",
+      groundAlt: "#46b85e",
+      tuft: "#1e6e32",
+      flowerColors: ["#ff8fab", "#ffe27a", "#ff9a6b", "#c89bff", "#ffffff"],
+      kind: "jungle",
+      wall: "#145c28",
+      path: "#d7c48a",
+      pathIn: "#f0e0b4",
+      exits: [exitsWest("desert", 2220)],
+      signs: [
+        { x: 110, y: 600, text: "Desert", dir: -1 }
+      ],
+      blocks: [],
+      habitats: [
+        { kind: "pond", x: 180, y: 60, w: 460, h: 280, wash: "#7ec8c0", color: "#3e8eb0" },
+        { kind: "ferns", x: 1760, y: 50, w: 500, h: 280, wash: "#8dcc62", color: "#1e6e32" },
+        { kind: "grass", x: 280, y: 1160, w: 520, h: 240, wash: "#6fbf62", color: "#1e6e32" }
+      ],
+      creatures: [
+        creature("shark", "Shark", ["This shark smiles in the pool.", "Real sharks live in the sea.", "A shark's skeleton is not made of bone."], 280, 80, 0, "", 160),
+        creature("junglesnake", "Python", ["This snake rests in cozy coils.", "A python is a large snake.", "Pythons squeeze the animals they eat."], 760, 72, 0, "", 230),
+        creature("jungledragon", "Drake", ["This dragon counts in the leaves.", "Drakes here are story friends.", "Real jungle animals do not breathe fire."], 1040, 104, 0, "", 1260),
+        creature("parrot", "Parrot", ["A parrot can copy sounds it hears.", "Parrots have strong curved beaks.", "Many parrots live in forests."], 1840, 90, 0, "", 130),
+        creature("monkey", "Monkey", ["A monkey climbs with its hands and feet.", "Many monkeys live in trees.", "They eat fruit and leaves."], 2060, 100, 0, "", 150),
+        creature("toucan", "Toucan", ["A toucan has a very large beak.", "The beak is light for its size.", "Toucans live in forests."], 2200, 90, 0, "", 160),
+        creature("tiger", "Tiger", ["Each tiger's stripes are different.", "Tigers are big cats.", "A tiger usually hunts alone."], 420, 110, 0, "", 1280),
+        creature("sloth", "Sloth", ["A sloth moves very slowly.", "It spends most of its life in trees.", "Sloths eat leaves."], 1900, 100, 0, "", 280),
+        creature("chameleon", "Chameleon", ["A chameleon can change color.", "It catches insects with a long tongue.", "Its eyes can look in two directions."], 740, 80, 0, "", 1380),
+        creature("lemur", "Lemur", ["Lemurs live on the island of Madagascar.", "Many lemurs have long tails.", "They eat fruit and leaves."], 2100, 90, 0, "", 270),
+        creature("jaguar", "Jaguar", ["A jaguar is a big spotted cat.", "It is a strong swimmer.", "Jaguars live in forests."], 400, 100, 0, "", 300),
+        creature("capybara", "Capybara", ["A capybara is the largest rodent.", "It likes to be near water.", "Capybaras eat grass and water plants."], 540, 90, 0, "", 180)
+      ]
+    },
+    museum: {
+      id: "museum",
+      title: "Museum",
+      w: 2500,
+      h: 2700,
+      seed: 71,
+      ground: "#f4e7cb",
+      groundAlt: "#e7d3a8",
+      tuft: "#d7c096",
+      flowerColors: [],
+      kind: "museum",
+      path: "#e7c99a",
+      pathIn: "#f6e6c4",
+      exits: [exitsWest("hollow", 2220)],
+      signs: [{ x: 180, y: 620, text: "Hollow", dir: -1 }],
+      blocks: [],
+      creatures: []
+    }
+  };
+
+  var ORDER = ["garden", "meadow", "hollow", "safari", "desert", "jungle"];
+  var DISPLAYS = [];
+  (function () {
+    var n = 0;
+    var cols = 8;
+    ORDER.forEach(function (id) {
+      AREAS[id].creatures.forEach(function (c) {
+        var col = n % cols;
+        var row = (n / cols) | 0;
+        var x = 190 + col * 280;
+        var y = row === 0 ? 240 : 780 + (row - 1) * 220;
+        DISPLAYS.push({ id: c.id, x: x, y: y });
+        n += 1;
+      });
+    });
+  })();
+
+
+  function mulberry32(a) {
+    return function () {
+      a |= 0;
+      a = (a + 0x6d2b79f5) | 0;
+      var t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function pocketXs() { return [200, 800, 1400, 2000]; }
+  function pocketRows() {
+    return [
+      { y: 40, h: 380, fy: 150 },
+      { y: 680, h: 280, fy: 760 },
+      { y: 1180, h: 320, fy: 1260 }
+    ];
+  }
+
+  function mazeCorridors(kind) {
+    var rects = [
+      { x: 0, y: 385, w: 2400, h: 160 },
+      { x: 80, y: 820, w: 2240, h: 150 },
+      { x: 80, y: 1320, w: 2240, h: 150 },
+      { x: 2080, y: 520, w: 180, h: 340 },
+      { x: 200, y: 900, w: 180, h: 460 }
+    ];
+    var xs = pocketXs();
+    var rows = pocketRows();
+    var c;
+    var r;
+    for (c = 0; c < xs.length; c++) {
+      for (r = 0; r < rows.length; r++) {
+        rects.push({ x: xs[c], y: rows[r].y, w: 250, h: rows[r].h });
+      }
+    }
+    if (kind === "meadow") rects.push({ x: 1140, y: 0, w: 220, h: 420 });
+    return rects;
+  }
+
+  function inRects(rects, x, y, pad) {
+    pad = pad || 0;
+    var i;
+    for (i = 0; i < rects.length; i++) {
+      var r = rects[i];
+      if (x >= r.x - pad && x <= r.x + r.w + pad && y >= r.y - pad && y <= r.y + r.h + pad) return true;
+    }
+    return false;
+  }
+
+  function ellipseHit(s, x, y) {
+    var dx = (x - s.x) / s.rx;
+    var dy = (y - s.y) / s.ry;
+    return dx * dx + dy * dy < 1;
+  }
+
+  function insideMaze(area, x, y) {
+    if (area.solids && area.solids.length) {
+      if (x < 24 || y < 24 || x > area.w - 24 || y > area.h - 24) return false;
+      var i;
+      for (i = 0; i < area.solids.length; i++) {
+        if (ellipseHit(area.solids[i], x, y)) return false;
+      }
+      return true;
+    }
+    var rects = area.corridors;
+    if (!rects || !rects.length) return true;
+    return inRects(rects, x, y, 0);
+  }
+
+  function sealRuns(area) {
+    var runs = [];
+    var step = 4;
+    function exterior(x, y, horiz, outward) {
+      var ox = horiz ? x : x + outward * 3;
+      var oy = horiz ? y + outward * 3 : y;
+      if (ox < 1 || oy < 1 || ox > area.w - 1 || oy > area.h - 1) return false;
+      if (inRects(area.corridors, ox, oy, 0)) return false;
+      return true;
+    }
+    function edge(a0, a1, fixed, horiz, outward) {
+      var pts = [];
+      var a;
+      for (a = a0; a < a1; a += step) pts.push(a);
+      pts.push(a1);
+      var run = null;
+      var i;
+      for (i = 0; i < pts.length; i++) {
+        a = pts[i];
+        var x = horiz ? a : fixed;
+        var y = horiz ? fixed : a;
+        if (exterior(x, y, horiz, outward)) {
+          if (!run) run = { a0: a, a1: a, horiz: horiz, fixed: fixed, outward: outward };
+          run.a1 = a;
+        } else if (run) {
+          runs.push(run);
+          run = null;
+        }
+      }
+      if (run) runs.push(run);
+    }
+    area.corridors.forEach(function (r) {
+      edge(r.x, r.x + r.w, r.y, true, -1);
+      edge(r.x, r.x + r.w, r.y + r.h, true, 1);
+      edge(r.y, r.y + r.h, r.x, false, -1);
+      edge(r.y, r.y + r.h, r.x + r.w, false, 1);
+    });
+    return runs;
+  }
+
+  function buildDecor(area) {
+    area.corridors = mazeCorridors(area.kind);
+    var rand = mulberry32(area.seed);
+    var blobs = [];
+    var i;
+    for (i = 0; i < 16; i++) {
+      blobs.push({
+        x: rand() * area.w,
+        y: rand() * area.h,
+        rx: 80 + rand() * 160,
+        ry: 50 + rand() * 90
+      });
+    }
+    var flowers = [];
+    var flowerCount = { hollow: 80, desert: 70, meadow: 220, safari: 180, jungle: 200, museum: 0, garden: 160 };
+    var count = flowerCount[area.kind] || 0;
+    for (i = 0; i < count; i++) {
+      var fx = 60 + rand() * (area.w - 120);
+      var fy = 60 + rand() * (area.h - 120);
+      if (inRects(area.corridors, fx, fy, 8)) continue;
+      flowers.push({
+        x: fx,
+        y: fy,
+        c: area.flowerColors[(rand() * area.flowerColors.length) | 0],
+        s: 0.65 + rand() * 0.7
+      });
+    }
+    var tufts = [];
+    for (i = 0; i < 100; i++) {
+      var tx = rand() * area.w;
+      var ty = rand() * area.h;
+      if (inRects(area.corridors, tx, ty, 6)) continue;
+      tufts.push({
+        x: tx,
+        y: ty,
+        s: 0.7 + rand() * 0.8
+      });
+    }
+    var extras = [];
+    if (area.kind === "hollow" || area.kind === "desert") {
+      for (i = 0; i < 16; i++) {
+        var rx = 90 + rand() * (area.w - 180);
+        var ry = 90 + rand() * (area.h - 180);
+        if (inRects(area.corridors, rx, ry, 12)) continue;
+        extras.push({ k: "rock", x: rx, y: ry, s: 0.7 + rand() * 1.1 });
+      }
+      for (i = 0; i < 12; i++) {
+        var fernX = 80 + rand() * (area.w - 160);
+        var fernY = 80 + rand() * (area.h - 160);
+        if (inRects(area.corridors, fernX, fernY, 10)) continue;
+        extras.push({ k: "fern", x: fernX, y: fernY, s: 0.8 + rand() * 0.8 });
+      }
+      if (area.kind === "hollow") {
+        for (i = 0; i < 8; i++) {
+          var px = 120 + rand() * (area.w - 240);
+          var py = 140 + rand() * (area.h - 280);
+          if (inRects(area.corridors, px, py, 8)) continue;
+          extras.push({ k: "print", x: px, y: py, rot: rand() * Math.PI });
+        }
+      }
+    }
+    if (area.kind === "jungle") {
+      for (i = 0; i < 18; i++) {
+        var jx = 80 + rand() * (area.w - 160);
+        var jy = 80 + rand() * (area.h - 160);
+        if (inRects(area.corridors, jx, jy, 10)) continue;
+        extras.push({ k: "fern", x: jx, y: jy, s: 0.9 + rand() * 0.9 });
+      }
+    }
+    var bushes = [];
+    function gateHere(x, y) {
+      for (var n = 0; n < area.exits.length; n++) {
+        var ex = area.exits[n];
+        if ((ex.side === "east" || ex.side === "west") && y > ex.y0 - 30 && y < ex.y1 + 30) {
+          if (ex.side === "east" && x > area.w - 90) return true;
+          if (ex.side === "west" && x < 90) return true;
+        }
+        if ((ex.side === "north" || ex.side === "south") && x > ex.x0 - 24 && x < ex.x1 + 24) {
+          if (ex.side === "north" && y < 90) return true;
+          if (ex.side === "south" && y > area.h - 90) return true;
+        }
+      }
+      return false;
+    }
+    for (var x = 46; x < area.w; x += 86) {
+      if (!gateHere(x, 40)) bushes.push({ x: x, y: 42, r: 32 });
+      if (!gateHere(x, area.h - 40)) bushes.push({ x: x, y: area.h - 42, r: 32 });
+    }
+    for (var y = 80; y < area.h - 40; y += 86) {
+      if (!gateHere(36, y)) bushes.push({ x: 40, y: y, r: 30 });
+      if (!gateHere(area.w - 36, y)) bushes.push({ x: area.w - 40, y: y, r: 30 });
+    }
+    area.blobs = blobs;
+    area.flowers = flowers;
+    area.tufts = tufts;
+    area.extras = extras;
+    area.bushes = bushes;
+    area.paths = [];
+    area.barriers = sealRuns(area);
+    var walls = [];
+    var wallKind = (area.kind === "hollow" || area.kind === "desert") ? "rock" : (area.kind === "jungle") ? "tree" : "hedge";
+    area.barriers.forEach(function (run) {
+      var span = Math.max(0, run.a1 - run.a0);
+      var n = Math.max(1, Math.round(span / 48));
+      var i;
+      for (i = 0; i <= n; i++) {
+        var a = run.a0 + span * (i / n);
+        var x = run.horiz ? a : run.fixed + run.outward * 18;
+        var y = run.horiz ? run.fixed + run.outward * 18 : a;
+        if (x < 12 || y < 12 || x > area.w - 12 || y > area.h - 12) continue;
+        if (inRects(area.corridors, x, y, -6)) continue;
+        walls.push({
+          x: x,
+          y: y,
+          k: wallKind,
+          r: 36,
+          s: wallKind === "rock" ? 1.55 : 1.2
+        });
+      }
+    });
+    area.walls = walls;
+  }
+
+  ORDER.forEach(function (id) { buildDecor(AREAS[id]); });
+
+  var imgs = {};
+  var imagesReady = false;
+  var names = ["frank", "frank-walk-1", "frank-walk-2", "plate-garden", "meadow-ground", "plate-hollow", "plate-safari", "plate-desert", "plate-jungle"];
+  ORDER.forEach(function (id) {
+    AREAS[id].creatures.forEach(function (c) {
+      if (names.indexOf(c.img) < 0) names.push(c.img);
+    });
+  });
+  var left = names.length;
+  function mark(img) {
+    if (img.getAttribute("data-done")) return;
+    img.setAttribute("data-done", "1");
+    left -= 1;
+    if (left <= 0) imagesReady = true;
+  }
+  names.forEach(function (n) {
+    var img = new Image();
+    img.onload = function () { mark(img); };
+    img.onerror = function () { mark(img); };
+    var ext = (n.indexOf("plate-") === 0 || n === "meadow-ground") ? ".jpg" : ".png";
+    img.src = "img/" + n + ext;
+    if (img.complete) mark(img);
+    imgs[n] = img;
+  });
+
+  function loadStored() {
+    try {
+      var raw = localStorage.getItem(SAVE);
+      if (raw) {
+        var data = JSON.parse(raw);
+        if (data && Array.isArray(data.seen)) return data;
+      }
+    } catch (e) {}
+    try {
+      var old = localStorage.getItem(SAVE_SEEN);
+      if (!old) return null;
+      var ids = JSON.parse(old);
+      if (Array.isArray(ids) && ids.length && typeof ids[0] === "string") {
+        return { seen: ids, area: "garden", x: 160, y: PATH_Y, facing: "right", mute: false, capeDone: false };
+      }
+    } catch (e2) {}
+    return null;
+  }
+  var stored = loadStored();
+  var seen = new Set();
+  var cape = null;
+  var capeDone = false;
+  var titleOn = true;
+  var gateWalk = null;
+  var muted = false;
+  try { muted = localStorage.getItem(MUTE_KEY) === "1" || !!(stored && stored.mute); } catch (e3) { muted = false; }
+  function saveSeen() { persist(); }
+
+  var player = { area: "garden", x: 160, y: PATH_Y, facing: "right", phase: 0, pose: "idle" };
+  var picked = new Set();
+  var endingDone = false;
+  var endingOn = false;
+  var mapOpen = false;
+  var notice = null;
+  var greeted = null;
+  var cheerUntil = 0;
+  var friendCountEl = document.getElementById("friendCount");
+  var mapBtn = document.getElementById("mapBtn");
+  var mapSheet = document.getElementById("mapSheet");
+  var mapCanvas = document.getElementById("mapCanvas");
+  var MAP_PLACES = [
+    ["garden", "Garden"],
+    ["meadow", "Meadow"],
+    ["hollow", "Dinosaur hollow"],
+    ["safari", "Safari"],
+    ["desert", "Desert"],
+    ["jungle", "Jungle"],
+    ["museum", "Museum"]
+  ];
+  var BLOOMS = [
+    { id: "garden-daisy", area: "garden", name: "Daisy", x: 1240, y: 80, color: "#fff4b0" },
+    { id: "garden-poppy", area: "garden", name: "Poppy", x: 1400, y: 80, color: "#f48caf" },
+    { id: "meadow-buttercup", area: "meadow", name: "Buttercup", x: 80, y: 80, color: "#ffe27a" },
+    { id: "meadow-clover", area: "meadow", name: "Clover", x: 1360, y: 80, color: "#fff6ea" },
+    { id: "hollow-heather", area: "hollow", name: "Heather", x: 560, y: 80, color: "#c89bff" },
+    { id: "hollow-fernflower", area: "hollow", name: "Fern flower", x: 1680, y: 80, color: "#8fbf62" },
+    { id: "safari-thorn", area: "safari", name: "Thorn bloom", x: 80, y: 80, color: "#ffb15a" },
+    { id: "safari-grass", area: "safari", name: "Grass star", x: 1400, y: 80, color: "#ffe27a" },
+    { id: "desert-sand", area: "desert", name: "Sand lily", x: 1080, y: 80, color: "#fff6ea" },
+    { id: "desert-sun", area: "desert", name: "Sun cup", x: 1240, y: 80, color: "#ffb15a" },
+    { id: "jungle-orchid", area: "jungle", name: "Orchid", x: 1120, y: 80, color: "#ff8fab" },
+    { id: "jungle-leaf", area: "jungle", name: "Leaf cup", x: 1280, y: 80, color: "#ffe27a" }
+  ];
+  var HABIT = {
+    ladybug: "flowers", butterfly: "flowers", bee: "flowers", snail: "nest", ant: "grass",
+    dragonfly: "flowers", grasshopper: "flowers", caterpillar: "flowers", worm: "nest",
+    moth: "flowers", cricket: "grass", stickinsect: "ferns",
+    rabbit: "grass", fox: "grass", hedgehog: "grass", robin: "grass", beetle: "grass",
+    deer: "grass", owl: "ferns", squirrel: "grass", badger: "grass", frog: "pond", mouse: "grass", duck: "pond",
+    triceratops: "ferns", stegosaurus: "bones", brachiosaurus: "ferns", ankylosaurus: "bones",
+    pterosaur: "bones", diplodocus: "ferns", parasaurolophus: "ferns", iguanodon: "ferns",
+    compsognathus: "bones", pachycephalosaurus: "bones", plateosaurus: "ferns", archaeopteryx: "ferns",
+    lion: "grass", zebra: "grass", giraffe: "grass", elephant: "grass", hippo: "pond",
+    rhino: "rocks", cheetah: "grass", ostrich: "grass", meerkat: "rocks", crocodile: "pond",
+    buffalo: "grass", flamingo: "pond",
+    snake: "rocks", camel: "rocks", dragon: "rocks", fennec: "rocks", tortoise: "rocks",
+    scorpion: "rocks", lizard: "rocks", hawk: "rocks", jerboa: "rocks", oryx: "rocks",
+    sandcat: "rocks", roadrunner: "rocks",
+    shark: "pond", junglesnake: "ferns", jungledragon: "ferns", parrot: "ferns", monkey: "ferns",
+    toucan: "ferns", tiger: "ferns", sloth: "ferns", chameleon: "ferns", lemur: "ferns",
+    jaguar: "ferns", capybara: "pond"
+  };
+  var HABWASH = {
+    flowers: ["#ffe7a8", "#ffd15c"],
+    nest: ["#e7c99a", "#a97444"],
+    grass: ["#c6e8a4", "#3e8a32"],
+    pond: ["#9ed8ea", "#3e8eb0"],
+    ferns: ["#c5d68a", "#5a8a3a"],
+    bones: ["#efd7a8", "#f4ead4"],
+    rocks: ["#f0d7a6", "#c4a06a"]
+  };
+  var SIGN = {
+    garden: "Garden", meadow: "Meadow", hollow: "Dinosaurs", safari: "Safari",
+    desert: "Desert", jungle: "Jungle", museum: "Museum"
+  };
+  function applyWild() {
+    var band = { y0: 780, y1: 1080 };
+    var solids = {
+      meadow: [
+        { x: 234, y: 172, rx: 169, ry: 169 },
+        { x: 484, y: 122, rx: 112, ry: 112 },
+        { x: 184, y: 391, rx: 97, ry: 97 },
+        { x: 2125, y: 188, rx: 184, ry: 184 },
+        { x: 1891, y: 109, rx: 91, ry: 91 },
+        { x: 2273, y: 422, rx: 109, ry: 109 },
+        { x: 219, y: 1594, rx: 175, ry: 175 },
+        { x: 484, y: 1700, rx: 106, ry: 106 },
+        { x: 2172, y: 1562, rx: 169, ry: 169 },
+        { x: 1883, y: 1727, rx: 91, ry: 91 },
+        { x: 734, y: 391, rx: 81, ry: 59 },
+        { x: 1625, y: 359, rx: 88, ry: 62 },
+        { x: 391, y: 1094, rx: 72, ry: 53 },
+        { x: 2219, y: 719, rx: 75, ry: 53 },
+        { x: 1000, y: 188, rx: 62, ry: 47 },
+        { x: 922, y: 875, rx: 47, ry: 38 },
+        { x: 1012, y: 934, rx: 34, ry: 28 },
+        { x: 956, y: 1003, rx: 28, ry: 22 },
+        { x: 844, y: 969, rx: 25, ry: 20 },
+        { x: 1134, y: 795, rx: 45, ry: 28 },
+        { x: 1242, y: 816, rx: 45, ry: 28 },
+        { x: 1350, y: 838, rx: 45, ry: 28 },
+        { x: 562, y: 1719, rx: 72, ry: 53 },
+        { x: 938, y: 1756, rx: 72, ry: 53 },
+        { x: 1344, y: 1700, rx: 72, ry: 53 },
+        { x: 1750, y: 1656, rx: 72, ry: 53 },
+        { x: 2094, y: 1719, rx: 72, ry: 53 }
+      ],
+      desert: [
+        { x: 480, y: 470, rx: 340, ry: 150 },
+        { x: 1580, y: 420, rx: 430, ry: 190 },
+        { x: 380, y: 810, rx: 70, ry: 60 },
+        { x: 1980, y: 1480, rx: 80, ry: 100 }
+      ],
+      garden: [
+        { x: 220, y: 1480, rx: 190, ry: 270 },
+        { x: 2180, y: 160, rx: 170, ry: 150 },
+        { x: 720, y: 420, rx: 110, ry: 100 },
+        { x: 2000, y: 1580, rx: 250, ry: 180 }
+      ],
+      hollow: [
+        { x: 640, y: 580, rx: 170, ry: 100 },
+        { x: 200, y: 1560, rx: 180, ry: 180 },
+        { x: 2160, y: 200, rx: 140, ry: 110 },
+        { x: 2100, y: 1660, rx: 90, ry: 50 }
+      ],
+      safari: [
+        { x: 680, y: 740, rx: 230, ry: 140 },
+        { x: 1860, y: 390, rx: 240, ry: 90 },
+        { x: 240, y: 1520, rx: 230, ry: 110 },
+        { x: 250, y: 430, rx: 190, ry: 80 }
+      ],
+      jungle: [
+        { x: 1200, y: 1748, rx: 1180, ry: 52 },
+        { x: 220, y: 1180, rx: 180, ry: 160 },
+        { x: 2120, y: 1180, rx: 180, ry: 180 },
+        { x: 1760, y: 280, rx: 160, ry: 100 }
+      ]
+    };
+    var homes = {
+      garden: { x: 1100, y: 1000 },
+      meadow: { x: 1200, y: 1000 },
+      hollow: { x: 1200, y: 1100 },
+      safari: { x: 1500, y: 1100 },
+      desert: { x: 1200, y: 1000 },
+      jungle: { x: 1000, y: 700 }
+    };
+    var spots = {
+      ladybug: [300, 260], butterfly: [2100, 1360], bee: [700, 1560], snail: [1100, 1300],
+      ant: [1200, 960], dragonfly: [300, 960], grasshopper: [1400, 1560], caterpillar: [1000, 360],
+      worm: [2100, 660], moth: [1700, 960], cricket: [800, 760], stickinsect: [800, 1160],
+      rabbit: [1457, 525], fox: [2244, 1056], hedgehog: [156, 1047], robin: [1962, 942],
+      beetle: [1162, 860], deer: [866, 531], owl: [1216, 429], squirrel: [688, 818],
+      badger: [1171, 286], frog: [1445, 798], mouse: [347, 744], duck: [1772, 650],
+      triceratops: [300, 260], stegosaurus: [700, 1560], brachiosaurus: [1300, 260], ankylosaurus: [1100, 960],
+      pterosaur: [1900, 960], diplodocus: [1500, 1560], parasaurolophus: [300, 960], iguanodon: [2100, 360],
+      compsognathus: [800, 460], pachycephalosaurus: [2100, 1560], plateosaurus: [1500, 760], archaeopteryx: [1500, 1160],
+      lion: [2100, 560], zebra: [2000, 1560], giraffe: [1100, 1400], elephant: [1700, 1060],
+      hippo: [1000, 460], rhino: [1400, 1560], cheetah: [1600, 260], ostrich: [800, 1560],
+      meerkat: [1400, 660], crocodile: [1100, 1060], buffalo: [400, 660], flamingo: [500, 1060],
+      snake: [2100, 1560], camel: [700, 1260], dragon: [2100, 260], fennec: [300, 260],
+      tortoise: [1400, 1460], scorpion: [1100, 660], lizard: [900, 960], hawk: [1800, 860],
+      jerboa: [800, 260], oryx: [1300, 1060], sandcat: [300, 960], roadrunner: [300, 1560],
+      shark: [900, 1770], junglesnake: [1600, 500], jungledragon: [300, 260], parrot: [1200, 460],
+      monkey: [2100, 1460], toucan: [1800, 860], tiger: [500, 860], sloth: [1100, 960],
+      chameleon: [700, 460], lemur: [1400, 760], jaguar: [1700, 1260], capybara: [1300, 1460]
+    };
+    var bloomsAt = {
+      garden: [[1500, 640], [500, 1300]],
+      meadow: [[1700, 980], [700, 1100]],
+      hollow: [[1000, 720], [1600, 520]],
+      safari: [[1500, 900], [600, 760]],
+      desert: [[1200, 860], [600, 1100]],
+      jungle: [[1000, 700], [1500, 1100]]
+    };
+    function retarget(area, side, sx, sy, extra) {
+      area.exits.forEach(function (ex) {
+        if (ex.side !== side) return;
+        ex.sx = sx;
+        ex.sy = sy;
+        if (!extra) return;
+        if (extra.y0 != null) { ex.y0 = extra.y0; ex.y1 = extra.y1; }
+        if (extra.x0 != null) { ex.x0 = extra.x0; ex.x1 = extra.x1; }
+      });
+    }
+    ORDER.forEach(function (id) {
+      var area = AREAS[id];
+      area.plate = id === "meadow" ? "meadow-ground" : "plate-" + id;
+      area.solids = solids[id];
+      area.home = homes[id];
+      area.corridors = [];
+      area.walls = [];
+      area.bushes = [];
+      area.barriers = [];
+      area.creatures.forEach(function (c) {
+        var p = spots[c.id];
+        if (p) { c.x = p[0]; c.y = p[1]; }
+      });
+    });
+    retarget(AREAS.garden, "east", 240, 920, band);
+    retarget(AREAS.meadow, "west", 2160, 920, band);
+    retarget(AREAS.meadow, "east", 240, 920, band);
+    retarget(AREAS.meadow, "north", 240, 920, { x0: 1220, x1: 1500 });
+    retarget(AREAS.hollow, "west", 2160, 920, band);
+    retarget(AREAS.hollow, "east", 180, PATH_Y, band);
+    retarget(AREAS.safari, "west", 1360, 260, band);
+    retarget(AREAS.safari, "east", 240, 920, band);
+    retarget(AREAS.desert, "west", 2160, 920, band);
+    retarget(AREAS.desert, "east", 240, 760, band);
+    retarget(AREAS.jungle, "west", 2160, 920, { y0: 640, y1: 900 });
+    AREAS.museum.exits[0].sx = 2100;
+    AREAS.museum.exits[0].sy = 920;
+    ORDER.forEach(function (id) {
+      var area = AREAS[id];
+      var signs = [];
+      area.exits.forEach(function (ex) {
+        var text = SIGN[ex.to] || ex.to;
+        if (ex.side === "east") signs.push({ x: 1880, y: (ex.y0 + ex.y1) / 2, text: text, dir: 1 });
+        else if (ex.side === "west") signs.push({ x: 520, y: (ex.y0 + ex.y1) / 2, text: text, dir: -1 });
+        else if (ex.side === "north") signs.push({ x: (ex.x0 + ex.x1) / 2, y: 250, text: text, dir: 0 });
+      });
+      area.signs = signs;
+      var pair = bloomsAt[id] || [];
+      var n = 0;
+      BLOOMS.forEach(function (b) {
+        if (b.area !== id) return;
+        if (pair[n]) { b.x = pair[n][0]; b.y = pair[n][1]; }
+        n += 1;
+      });
+      area.blooms = BLOOMS.filter(function (b) { return b.area === id; });
+    });
+    var ptero = null;
+    AREAS.hollow.creatures.forEach(function (c) { if (c.id === "pterosaur") ptero = c; });
+    AREAS.hollow.trail = [];
+    if (ptero) {
+      var y;
+      for (y = ptero.y + 180; y >= ptero.y + 16; y -= 28) AREAS.hollow.trail.push([ptero.x, y]);
+    }
+  }
+
+  function layoutOutdoor() {
+    var xs = pocketXs();
+    var rows = pocketRows();
+    ORDER.forEach(function (id) {
+      var area = AREAS[id];
+      area.creatures.forEach(function (c, i) {
+        var row = rows[(i / 4) | 0];
+        c.x = xs[i % 4] + 120;
+        c.y = row.fy;
+      });
+      area.habitats = area.creatures.map(function (c) {
+        var kind = HABIT[c.id] || "grass";
+        var wash = HABWASH[kind] || HABWASH.grass;
+        return { kind: kind, x: c.x - 148, y: c.y - 24, w: 150, h: 110, wash: wash[0], color: wash[1] };
+      });
+      var signs = [];
+      area.exits.forEach(function (ex) {
+        var text = SIGN[ex.to] || ex.to;
+        if (ex.side === "east") signs.push({ x: 2140, y: 470, text: text, dir: 1 });
+        else if (ex.side === "west") signs.push({ x: 260, y: 470, text: text, dir: -1 });
+        else if (ex.side === "north") signs.push({ x: (ex.x0 + ex.x1) / 2, y: 300, text: text, dir: 0 });
+      });
+      area.signs = signs;
+      if (id === "hollow") {
+        var ptero = null;
+        area.creatures.forEach(function (c) { if (c.id === "pterosaur") ptero = c; });
+        area.trail = [];
+        var y;
+        for (y = ptero.y + 130; y >= ptero.y - 8; y -= 26) area.trail.push([ptero.x, y]);
+      }
+    });
+    var bloomN = {};
+    BLOOMS.forEach(function (b) {
+      var n = bloomN[b.area] || 0;
+      bloomN[b.area] = n + 1;
+      var area = AREAS[b.area];
+      var c = area.creatures[n === 0 ? 1 : 10];
+      b.x = c.x + 78;
+      b.y = c.y + 118;
+    });
+    ORDER.forEach(function (id) {
+      AREAS[id].blooms = BLOOMS.filter(function (b) { return b.area === id; });
+    });
+    applyWild();
+  }
+  layoutOutdoor();
+  loadFriendSpots();
+  var audioCtx = null;
+  var musicGain = null;
+  var musicTimer = null;
+  var musicOn = false;
+  var stepAcc = 0;
+  var TUNES = {
+    title:  { tempo: 0.46, notes: [392, 440, 494, 523, 494, 440, 392, 349] },
+    garden: { tempo: 0.4, notes: [523, 587, 659, 698, 659, 587, 523, 494] },
+    meadow: { tempo: 0.42, notes: [440, 494, 523, 587, 523, 494, 440, 392] },
+    hollow: { tempo: 0.52, notes: [330, 349, 392, 440, 392, 349, 330, 294] },
+    safari: { tempo: 0.38, notes: [494, 554, 622, 554, 494, 440, 494, 554] },
+    desert: { tempo: 0.54, notes: [349, 392, 440, 392, 349, 311, 294, 349] },
+    jungle: { tempo: 0.42, notes: [523, 587, 523, 494, 587, 659, 587, 523] },
+    museum: { tempo: 0.58, notes: [392, 440, 494, 440, 392, 349, 330, 392] }
+  };
+
+  function persist() {
+    var data;
+    if (titleOn && stored) {
+      data = {
+        seen: stored.seen || [],
+        area: stored.area || "garden",
+        x: typeof stored.x === "number" ? stored.x : 160,
+        y: typeof stored.y === "number" ? stored.y : PATH_Y,
+        facing: stored.facing === "left" ? "left" : "right",
+        mute: muted,
+        capeDone: !!stored.capeDone,
+        flowers: stored.flowers || [],
+        endingDone: !!stored.endingDone
+      };
+    } else if (titleOn) {
+      try { localStorage.setItem(MUTE_KEY, muted ? "1" : "0"); } catch (e) {}
+      return;
+    } else {
+      data = {
+        seen: Array.from(seen),
+        area: player.area,
+        x: Math.round(player.x),
+        y: Math.round(player.y),
+        facing: player.facing === "left" ? "left" : "right",
+        mute: muted,
+        capeDone: capeDone,
+        flowers: Array.from(picked),
+        endingDone: endingDone
+      };
+    }
+    stored = data;
+    try {
+      localStorage.setItem(SAVE, JSON.stringify(data));
+      localStorage.setItem(SAVE_SEEN, JSON.stringify(data.seen));
+      localStorage.setItem(MUTE_KEY, muted ? "1" : "0");
+    } catch (e2) {}
+  }
+
+  function hasContinue() {
+    if (!stored || !Array.isArray(stored.seen)) return false;
+    if (stored.seen.length) return true;
+    if (stored.capeDone) return true;
+    if (stored.area && stored.area !== "garden") return true;
+    if (typeof stored.x === "number" && Math.abs(stored.x - 160) > 8) return true;
+    return false;
+  }
+
+  function audio() {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    if (!audioCtx) {
+      audioCtx = new AC();
+      musicGain = audioCtx.createGain();
+      musicGain.gain.value = 0.05;
+      musicGain.connect(audioCtx.destination);
+    }
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    return audioCtx;
+  }
+
+  function stopMusic() {
+    if (musicTimer) {
+      clearInterval(musicTimer);
+      musicTimer = null;
+    }
+    musicOn = false;
+  }
+
+  function startMusic() {
+    stopMusic();
+    if (muted) return;
+    var ctx = audio();
+    if (!ctx || !musicGain) return;
+    var tune = TUNES[titleOn ? "title" : player.area] || TUNES.garden;
+    var i = 0;
+    function voice(freq, when, dur, peak) {
+      var o = ctx.createOscillator();
+      var g = ctx.createGain();
+      var f = ctx.createBiquadFilter();
+      o.type = "triangle";
+      o.frequency.value = freq;
+      f.type = "lowpass";
+      f.frequency.value = 980;
+      g.gain.setValueAtTime(0.0001, when);
+      g.gain.exponentialRampToValueAtTime(peak, when + 0.08);
+      g.gain.exponentialRampToValueAtTime(0.0001, when + dur);
+      o.connect(f);
+      f.connect(g);
+      g.connect(musicGain);
+      o.start(when);
+      o.stop(when + dur + 0.02);
+    }
+    function phrase() {
+      if (muted) return;
+      if (titleOn && tune !== TUNES.title) return;
+      var freq = tune.notes[i % tune.notes.length];
+      var t = ctx.currentTime;
+      var dur = tune.tempo * 0.92;
+      voice(freq, t, dur, 0.55);
+      voice(freq * 0.5, t, dur, 0.18);
+      i += 1;
+    }
+    phrase();
+    musicTimer = setInterval(phrase, tune.tempo * 1000);
+    musicOn = true;
+  }
+
+  function playFoot() {
+    if (muted || titleOn) return;
+    var ctx = audio();
+    if (!ctx) return;
+    var dur = 0.07;
+    var len = Math.max(1, Math.floor(ctx.sampleRate * dur));
+    var buffer = ctx.createBuffer(1, len, ctx.sampleRate);
+    var data = buffer.getChannelData(0);
+    var n;
+    for (n = 0; n < len; n++) data[n] = (Math.random() * 2 - 1) * (1 - n / len);
+    var src = ctx.createBufferSource();
+    src.buffer = buffer;
+    var filter = ctx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.value = 240;
+    var g = ctx.createGain();
+    g.gain.value = 0.16;
+    src.connect(filter);
+    filter.connect(g);
+    g.connect(ctx.destination);
+    src.start();
+  }
+
+  function playCheer() {
+    if (muted || titleOn) return;
+    var ctx = audio();
+    if (!ctx) return;
+    [523, 659, 784].forEach(function (freq, i) {
+      var o = ctx.createOscillator();
+      var g = ctx.createGain();
+      o.type = "triangle";
+      o.frequency.value = freq;
+      var t = ctx.currentTime + i * 0.09;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.22, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.26);
+      o.connect(g);
+      g.connect(ctx.destination);
+      o.start(t);
+      o.stop(t + 0.28);
+    });
+  }
+
+  function noteStamp(c) {
+    var q = QUIZ[c.id];
+    var area = null;
+    ORDER.forEach(function (id) {
+      AREAS[id].creatures.forEach(function (one) {
+        if (one.id === c.id) area = AREAS[id];
+      });
+    });
+    if ((q && q.kind === "spell") || (area && placeDone(area))) playCheer();
+  }
+  var heldKeys = new Set();
+  var heldTouch = new Set();
+  var finger = null;
+  var padTouch = null;
+  var journalOpen = false;
+  var shownId = null;
+  var viewW = 300;
+  var viewH = 300;
+  var dpr = 1;
+  var camX = 0;
+  var camY = 0;
+  var snap = true;
+  var last = performance.now();
+
+  function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+  function hasDir(d) { return heldKeys.has(d) || heldTouch.has(d); }
+
+  var keyMap = {
+    arrowup: "up", w: "up",
+    arrowdown: "down", s: "down",
+    arrowleft: "left", a: "left",
+    arrowright: "right", d: "right"
+  };
+
+  window.addEventListener("keydown", function (e) {
+    var k = e.key.toLowerCase();
+    if (keyMap[k]) {
+      e.preventDefault();
+      if (!journalOpen && !mapOpen && !titleOn && !gateWalk) heldKeys.add(keyMap[k]);
+    } else if (k === "escape" && journalOpen) {
+      closeJournal();
+    } else if (k === "escape" && mapOpen) {
+      closeMap();
+    } else if (k === "j") {
+      toggleJournal();
+    }
+  });
+  window.addEventListener("keyup", function (e) {
+    var k = e.key.toLowerCase();
+    if (keyMap[k]) {
+      e.preventDefault();
+      heldKeys.delete(keyMap[k]);
+    }
+  });
+  function clearPad() {
+    heldTouch.clear();
+    padTouch = null;
+    finger = null;
+    Array.prototype.forEach.call(document.querySelectorAll(".dpad button"), function (btn) {
+      btn.classList.remove("on");
+    });
+  }
+
+  window.addEventListener("blur", function () {
+    heldKeys.clear();
+    clearPad();
+  });
+
+  function playLocked() {
+    return journalOpen || mapOpen || titleOn || gateWalk || cape;
+  }
+
+  function setPadDir(dir) {
+    heldTouch.clear();
+    Array.prototype.forEach.call(document.querySelectorAll(".dpad button"), function (btn) {
+      var on = dir && btn.getAttribute("data-dir") === dir;
+      btn.classList.toggle("on", !!on);
+      if (on) heldTouch.add(dir);
+    });
+  }
+
+  function padDirAt(clientX, clientY) {
+    var el = document.elementFromPoint(clientX, clientY);
+    if (!el || !el.closest) return null;
+    var btn = el.closest(".dpad button");
+    return btn ? btn.getAttribute("data-dir") : null;
+  }
+
+  var dpad = document.getElementById("dpad");
+  dpad.addEventListener("touchstart", function (e) {
+    e.preventDefault();
+    var t = e.changedTouches[0];
+    padTouch = t.identifier;
+    finger = null;
+    if (playLocked()) return;
+    setPadDir(padDirAt(t.clientX, t.clientY));
+  }, { passive: false });
+  dpad.addEventListener("touchmove", function (e) {
+    e.preventDefault();
+    if (padTouch == null) return;
+    var i, t = null;
+    for (i = 0; i < e.touches.length; i++) {
+      if (e.touches[i].identifier === padTouch) t = e.touches[i];
+    }
+    if (!t || playLocked()) {
+      setPadDir(null);
+      return;
+    }
+    setPadDir(padDirAt(t.clientX, t.clientY));
+  }, { passive: false });
+  function endPadTouch(e) {
+    if (padTouch == null) return;
+    var i, gone = false;
+    for (i = 0; i < e.changedTouches.length; i++) {
+      if (e.changedTouches[i].identifier === padTouch) gone = true;
+    }
+    if (!gone) return;
+    e.preventDefault();
+    padTouch = null;
+    setPadDir(null);
+  }
+  dpad.addEventListener("touchend", endPadTouch, { passive: false });
+  dpad.addEventListener("touchcancel", endPadTouch, { passive: false });
+  dpad.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+
+  Array.prototype.forEach.call(document.querySelectorAll(".dpad button"), function (btn) {
+    function press(e) {
+      if (e.pointerType === "touch") return;
+      e.preventDefault();
+      if (playLocked()) return;
+      finger = null;
+      heldTouch.add(btn.getAttribute("data-dir"));
+      btn.classList.add("on");
+      try { btn.setPointerCapture(e.pointerId); } catch (err) {}
+    }
+    function release(e) {
+      if (e.pointerType === "touch") return;
+      heldTouch.delete(btn.getAttribute("data-dir"));
+      btn.classList.remove("on");
+    }
+    btn.addEventListener("pointerdown", press);
+    btn.addEventListener("pointerup", release);
+    btn.addEventListener("pointercancel", release);
+    btn.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+  });
+
+  var placeMode = /(?:\?|&)place=1(?:&|$)/.test(location.search);
+  var placeDrag = null;
+  var placeList = document.getElementById("placeList");
+  var placeBtn = document.getElementById("placeBtn");
+  var placeZoomBox = document.getElementById("placeZoom");
+  var placeZoom = 1;
+  var pinch = null;
+  var PLACE_KEY = "sf-friend-spots";
+
+  function setPlaceZoom(z) {
+    placeZoom = clamp(z, 0.55, 2.5);
+  }
+
+  function touchSpan(touches) {
+    if (!touches || touches.length < 2) return 0;
+    return Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
+  }
+
+  function loadFriendSpots() {
+    var raw = null;
+    try { raw = JSON.parse(localStorage.getItem(PLACE_KEY) || "null"); } catch (err) { raw = null; }
+    if (!raw) return;
+    ORDER.forEach(function (id) {
+      AREAS[id].creatures.forEach(function (c) {
+        var spot = raw[c.id];
+        if (!spot || typeof spot.x !== "number" || typeof spot.y !== "number") return;
+        c.x = spot.x;
+        c.y = spot.y;
+      });
+    });
+  }
+
+  function saveFriendSpots() {
+    var data = {};
+    ORDER.forEach(function (id) {
+      AREAS[id].creatures.forEach(function (c) {
+        data[c.id] = { x: Math.round(c.x), y: Math.round(c.y) };
+      });
+    });
+    try { localStorage.setItem(PLACE_KEY, JSON.stringify(data)); } catch (err) {}
+  }
+
+  function friendAtWorld(wx, wy) {
+    var best = null;
+    var bestD = 110;
+    areaNow().creatures.forEach(function (c) {
+      var body = Math.hypot(c.x - wx, (c.y - c.h * 0.45) - wy);
+      var feet = Math.hypot(c.x - wx, c.y - wy);
+      var d = body < feet ? body : feet;
+      if (d < bestD) { best = c; bestD = d; }
+    });
+    return best;
+  }
+
+  function friendAtClient(clientX, clientY) {
+    var w = worldFromClient(clientX, clientY);
+    var best = null;
+    var bestD = 1e9;
+    areaNow().creatures.forEach(function (c) {
+      var ih = c.h;
+      var iw = ih;
+      var img = imgs[c.img];
+      if (img && img.naturalWidth) iw = img.naturalWidth / img.naturalHeight * ih;
+      var left = c.x - iw / 2 - 28;
+      var right = c.x + iw / 2 + 28;
+      var top = c.y - ih - 28;
+      var bot = c.y + 28;
+      var cx = w.x < left ? left : w.x > right ? right : w.x;
+      var cy = w.y < top ? top : w.y > bot ? bot : w.y;
+      var d = Math.hypot(w.x - cx, w.y - cy);
+      if (d < 8 && d < bestD) { best = c; bestD = d; }
+    });
+    return best;
+  }
+
+  function renderPlaceList() {
+    if (!placeMode || !placeList) return;
+    placeList.innerHTML = "";
+    var title = document.createElement("p");
+    title.textContent = "Drag a friend";
+    placeList.appendChild(title);
+    areaNow().creatures.forEach(function (c) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = c.name;
+      if (placeDrag && placeDrag.c === c) btn.className = "on";
+      btn.addEventListener("pointerdown", function (e) {
+        if (e.button && e.button !== 0) return;
+        e.preventDefault();
+        e.stopPropagation();
+        beginFriendDrag(e, c);
+      });
+      placeList.appendChild(btn);
+    });
+  }
+
+  function setPlaceMode(on) {
+    placeMode = !!on;
+    if (placeBtn) placeBtn.setAttribute("aria-pressed", placeMode ? "true" : "false");
+    if (!placeMode) {
+      placeZoom = 1;
+      placeDrag = null;
+      pinch = null;
+    }
+    if (placeList) placeList.hidden = !placeMode;
+    if (placeZoomBox) placeZoomBox.hidden = !placeMode;
+    if (placeMode) {
+      meet.hidden = true;
+      renderPlaceList();
+    }
+  }
+
+  if (placeZoomBox) {
+    document.getElementById("zoomIn").addEventListener("click", function () {
+      if (!placeMode) return;
+      setPlaceZoom(placeZoom * 1.2);
+    });
+    document.getElementById("zoomOut").addEventListener("click", function () {
+      if (!placeMode) return;
+      setPlaceZoom(placeZoom / 1.2);
+    });
+  }
+  if (placeBtn) {
+    placeBtn.addEventListener("click", function () { setPlaceMode(!placeMode); });
+  }
+  setPlaceMode(placeMode);
+
+  function worldFromClient(clientX, clientY) {
+    var rect = canvas.getBoundingClientRect();
+    var sx = (clientX - rect.left) * (viewW / Math.max(1, rect.width));
+    var sy = (clientY - rect.top) * (viewH / Math.max(1, rect.height));
+    var area = areaNow();
+    if (area.plate) {
+      var cam = wildCam(area);
+      return { x: (sx - cam.ox) / cam.sc, y: (sy - cam.oy) / cam.sc };
+    }
+    return { x: sx + camX, y: sy + camY };
+  }
+
+  var downPointers = {};
+
+  function beginFriendDrag(e, creature) {
+    placeDrag = { id: e.pointerId, c: creature };
+    finger = null;
+    pinch = null;
+    try { stage.setPointerCapture(e.pointerId); } catch (err) {}
+  }
+
+  function moveFriendTo(clientX, clientY) {
+    if (!placeDrag) return;
+    var spot = worldFromClient(clientX, clientY);
+    var area = areaNow();
+    placeDrag.c.x = clamp(spot.x, 36, area.w - 36);
+    placeDrag.c.y = clamp(spot.y, 36, area.h - 36);
+  }
+
+  function finishFriendDrag() {
+    if (!placeDrag) return;
+    placeDrag = null;
+    saveFriendSpots();
+    renderPlaceList();
+  }
+
+  function pinchSpan() {
+    var pts = [];
+    Object.keys(downPointers).forEach(function (k) { pts.push(downPointers[k]); });
+    if (pts.length < 2) return 0;
+    return Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+  }
+
+  stage.addEventListener("pointerdown", function (e) {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    if (e.target.closest && e.target.closest("#placeList, #placeZoom")) return;
+    if (playLocked() || padTouch != null) return;
+    if (e.target !== canvas) return;
+    e.preventDefault();
+    downPointers[e.pointerId] = { x: e.clientX, y: e.clientY };
+    try { stage.setPointerCapture(e.pointerId); } catch (err) {}
+    if (placeMode && Object.keys(downPointers).length >= 2) {
+      if (placeDrag) finishFriendDrag();
+      finger = null;
+      pinch = { d: pinchSpan(), z: placeZoom };
+      return;
+    }
+    if (pinch) return;
+    if (placeMode) {
+      var hit = friendAtClient(e.clientX, e.clientY);
+      if (hit) {
+        beginFriendDrag(e, hit);
+        return;
+      }
+    }
+    var w = worldFromClient(e.clientX, e.clientY);
+    finger = { id: e.pointerId, x: w.x, y: w.y };
+  });
+  stage.addEventListener("pointermove", function (e) {
+    if (!downPointers[e.pointerId] && !(placeDrag && placeDrag.id === e.pointerId)) return;
+    if (downPointers[e.pointerId]) downPointers[e.pointerId] = { x: e.clientX, y: e.clientY };
+    if (placeMode && pinch && Object.keys(downPointers).length >= 2) {
+      var span = pinchSpan();
+      if (pinch.d > 12) setPlaceZoom(pinch.z * (span / pinch.d));
+      return;
+    }
+    if (placeDrag && e.pointerId === placeDrag.id) {
+      e.preventDefault();
+      moveFriendTo(e.clientX, e.clientY);
+      return;
+    }
+    if (!finger || finger.id !== e.pointerId || playLocked()) return;
+    var w = worldFromClient(e.clientX, e.clientY);
+    finger.x = w.x;
+    finger.y = w.y;
+  });
+  function endStagePointer(e) {
+    delete downPointers[e.pointerId];
+    if (Object.keys(downPointers).length < 2) pinch = null;
+    if (placeDrag && e.pointerId === placeDrag.id) {
+      finishFriendDrag();
+      return;
+    }
+    if (finger && finger.id === e.pointerId) finger = null;
+  }
+  stage.addEventListener("pointerup", endStagePointer);
+  stage.addEventListener("pointercancel", endStagePointer);
+  window.addEventListener("pointerup", endStagePointer);
+  window.addEventListener("pointercancel", endStagePointer);
+  canvas.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+
+  function resize() {
+    var rect = stage.getBoundingClientRect();
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    viewW = Math.max(1, rect.width);
+    viewH = Math.max(1, rect.height);
+    canvas.width = Math.round(viewW * dpr);
+    canvas.height = Math.round(viewH * dpr);
+  }
+  if (window.ResizeObserver) {
+    new ResizeObserver(resize).observe(stage);
+  } else {
+    window.addEventListener("resize", resize);
+  }
+  resize();
+
+  function areaNow() { return AREAS[player.area]; }
+
+  function arrive(ex) {
+    player.area = ex.to;
+    player.x = ex.sx;
+    player.y = ex.sy;
+    snap = true;
+    shownId = null;
+    var area = areaNow();
+    placeName.textContent = area.title;
+    stage.style.background = area.ground;
+    persist();
+    startMusic();
+    if (journalOpen) renderJournal();
+    renderPlaceList();
+  }
+
+  function beginGate(ex) {
+    if (gateWalk || titleOn) return;
+    if (ex.to === "museum" && !capeDone) return;
+    heldKeys.clear();
+    clearPad();
+    meet.hidden = true;
+    gateWalk = { t: 0, dur: 2.3, ex: ex };
+  }
+
+  function mainCreatures(area) {
+    return area.creatures.filter(function (c) { return !c.side; });
+  }
+
+  function pathClear(area) {
+    var list = mainCreatures(area);
+    var i;
+    for (i = 0; i < list.length; i++) {
+      if (!seen.has(list[i].id) || list[i].clearing) return false;
+    }
+    return true;
+  }
+
+  function forwardLimit(area) {
+    var list = mainCreatures(area);
+    var i;
+    for (i = 0; i < list.length; i++) {
+      if (!seen.has(list[i].id) || list[i].clearing) return list[i].gate;
+    }
+    return area.w;
+  }
+
+  function hits(x, y) {
+    var area = areaNow();
+    if (area.solids && area.solids.length) {
+      var n;
+      for (n = 0; n < area.solids.length; n++) {
+        if (ellipseHit(area.solids[n], x, y)) return true;
+      }
+      return false;
+    }
+    var blocks = area.blocks;
+    for (var i = 0; i < blocks.length; i++) {
+      var b = blocks[i];
+      if (b.pond) continue;
+      var dx = x - b.x;
+      var dy = y - b.y;
+      var rr = b.r + 16;
+      if (dx * dx + dy * dy < rr * rr) return true;
+    }
+    if (area.corridors && area.corridors.length && !insideMaze(area, x, y)) return true;
+    return false;
+  }
+
+  function nearest() {
+    var list = areaNow().creatures;
+    var best = null;
+    var bestD = 1e9;
+    for (var i = 0; i < list.length; i++) {
+      var c = list[i];
+      var d = Math.hypot(c.x - player.x, c.y - player.y);
+      var need = 76 + c.h * 0.12;
+      if (d < need && d < bestD) {
+        best = c;
+        bestD = d;
+      }
+    }
+    return best;
+  }
+
+  var quiz = null;
+
+  function shuffle(list) {
+    var a = list.slice();
+    var i;
+    for (i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i];
+      a[i] = a[j];
+      a[j] = t;
+    }
+    return a;
+  }
+
+  function setTag(text, kind) {
+    meetTag.textContent = text;
+    meetTag.className = kind || "";
+  }
+
+  function clearQuizBits() {
+    slotsEl.replaceChildren();
+    choicesEl.replaceChildren();
+    pipsEl.replaceChildren();
+    listenBtn.hidden = true;
+    quiz = null;
+  }
+
+  function paintPips(q) {
+    pipsEl.replaceChildren();
+    if (!q || !q.pips) return;
+    var groups = q.pips.groups;
+    var gone = q.pips.gone || 0;
+    var total = 0;
+    var g;
+    for (g = 0; g < groups.length; g++) total += groups[g];
+    var n = 0;
+    for (g = 0; g < groups.length; g++) {
+      if (g) {
+        var gap = document.createElement("span");
+        gap.className = "gap";
+        pipsEl.appendChild(gap);
+      }
+      var i;
+      for (i = 0; i < groups[g]; i++) {
+        n += 1;
+        var dot = document.createElement("i");
+        dot.style.background = q.pips.color || "#e35d4f";
+        if (gone && n > total - gone) dot.className = "gone";
+        pipsEl.appendChild(dot);
+      }
+    }
+  }
+
+  function showHello(c, cheer) {
+    var q = QUIZ[c.id];
+    var spelled = cheer && q && q.kind === "spell" ? q.word : "";
+    clearQuizBits();
+    setTag(cheer ? "Yes!" : "Hello", cheer ? "cheer" : "");
+    meetName.textContent = c.name;
+    meetAsk.textContent = cheer ? "Nice work." : "";
+    meetWord.textContent = spelled;
+    meetFact.textContent = c.fact;
+    meet.hidden = false;
+  }
+
+  function gbVoice() {
+    var synth = window.speechSynthesis;
+    if (!synth || !synth.getVoices) return null;
+    var voices = synth.getVoices() || [];
+    var i;
+    for (i = 0; i < voices.length; i++) {
+      var lang = String(voices[i].lang || "").toLowerCase();
+      if (lang === "en-gb" || lang.indexOf("en-gb") === 0) return voices[i];
+    }
+    return null;
+  }
+
+  function speakLine(text, rate) {
+    var synth = window.speechSynthesis;
+    if (!synth || !text) return;
+    synth.cancel();
+    var utter = new SpeechSynthesisUtterance(text);
+    utter.lang = "en-GB";
+    utter.rate = rate || 0.9;
+    utter.pitch = 1;
+    var voice = gbVoice();
+    if (voice) utter.voice = voice;
+    synth.speak(utter);
+  }
+
+  function speakWord(word) {
+    speakLine(word, 0.62);
+  }
+
+  function shuffledLetters(q) {
+    var a = shuffle(q.letters);
+    var guard = 0;
+    while (a.slice(0, q.word.length).join("") === q.word && guard < 8) {
+      a = shuffle(q.letters);
+      guard += 1;
+    }
+    return a;
+  }
+
+  function paintSlots() {
+    var nodes = slotsEl.children;
+    var i;
+    for (i = 0; i < nodes.length; i++) nodes[i].textContent = quiz.slots[i] || "";
+  }
+
+  function startPterosaurCape() {
+    if (cape || capeDone) return;
+    heldKeys.clear();
+    clearPad();
+    meet.hidden = true;
+    cape = { t: 0, dur: 2.4, fromX: player.x, fromY: player.y };
+  }
+
+  function friendTotal() {
+    var n = 0;
+    ORDER.forEach(function (id) { n += AREAS[id].creatures.length; });
+    return n;
+  }
+
+  function areaFor(c) {
+    var found = null;
+    ORDER.forEach(function (id) {
+      AREAS[id].creatures.forEach(function (one) {
+        if (one.id === c.id) found = AREAS[id];
+      });
+    });
+    return found;
+  }
+
+  function paintHud() {
+    friendCountEl.hidden = titleOn;
+    mapBtn.hidden = titleOn;
+    if (!titleOn) friendCountEl.textContent = seen.size + " of " + friendTotal() + ".";
+  }
+
+  function grantFriend(c) {
+    if (seen.has(c.id)) return false;
+    var area = areaFor(c);
+    var wasDone = area && placeDone(area);
+    seen.add(c.id);
+    c.hop = { t: 0, dur: 0.55 };
+    noteStamp(c);
+    paintHud();
+    saveSeen();
+    if (journalOpen) renderJournal();
+    if (area && !wasDone && placeDone(area)) showMedal(area);
+    return true;
+  }
+
+  function finishFriend(c) {
+    grantFriend(c);
+    if (c.id === "pterosaur") {
+      startPterosaurCape();
+      return;
+    }
+    if (shownId === "medal") return;
+    showHello(c, true);
+  }
+
+  function tickClears(dt) {
+    ORDER.forEach(function (id) {
+      AREAS[id].creatures.forEach(function (c) {
+        if (!c.clearing) return;
+        c.clearing.t += dt;
+        if (c.clearing.t < c.clearing.dur) return;
+        c.clearing = null;
+        grantFriend(c);
+      });
+    });
+  }
+
+  function undoLetter() {
+    if (!quiz || !quiz.slots || !quiz.slots.length) return;
+    var letter = quiz.slots.pop();
+    paintSlots();
+    var buttons = choicesEl.querySelectorAll("button[data-letter]");
+    var i;
+    for (i = 0; i < buttons.length; i++) {
+      if (buttons[i].disabled && buttons[i].getAttribute("data-letter") === letter) {
+        buttons[i].disabled = false;
+        break;
+      }
+    }
+  }
+
+  function pickLetter(c, btn) {
+    if (!quiz || quiz.id !== c.id || quiz.slots.length >= quiz.word.length) return;
+    var letter = btn.getAttribute("data-letter");
+    quiz.slots.push(letter);
+    btn.disabled = true;
+    paintSlots();
+    if (quiz.slots.length < quiz.word.length) return;
+    if (quiz.slots.join("") === quiz.word) {
+      finishFriend(c);
+      return;
+    }
+    setTag("Try again.", "again");
+    quiz.slots = [];
+    paintSlots();
+    var buttons = choicesEl.querySelectorAll("button[data-letter]");
+    var i;
+    for (i = 0; i < buttons.length; i++) buttons[i].disabled = false;
+  }
+
+  function pickNumber(c, n) {
+    var q = QUIZ[c.id];
+    if (n === q.answer) {
+      finishFriend(c);
+      return;
+    }
+    setTag("Try again.", "again");
+  }
+
+  function showQuizPlay(c) {
+    var q = QUIZ[c.id];
+    clearQuizBits();
+    setTag("", "");
+    meetName.textContent = q.kind === "spell" ? "New friend" : c.name;
+    meetAsk.textContent = q.kind === "spell" ? q.job : q.prompt;
+    meetWord.textContent = "";
+    meetFact.textContent = "";
+    paintPips(q);
+    if (q.kind === "spell") {
+      quiz = { id: c.id, phase: "play", word: q.word, slots: [] };
+      listenBtn.hidden = false;
+      listenBtn.onclick = function () { speakWord(q.say || q.word); };
+      var s;
+      for (s = 0; s < q.word.length; s++) {
+        var slot = document.createElement("div");
+        slot.className = "slot";
+        slotsEl.appendChild(slot);
+      }
+      shuffledLetters(q).forEach(function (letter) {
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.textContent = letter;
+        btn.setAttribute("data-letter", letter);
+        btn.addEventListener("click", function () { pickLetter(c, btn); });
+        choicesEl.appendChild(btn);
+      });
+      var undo = document.createElement("button");
+      undo.type = "button";
+      undo.className = "undo";
+      undo.textContent = "Undo";
+      undo.addEventListener("click", undoLetter);
+      choicesEl.appendChild(undo);
+    } else {
+      quiz = { id: c.id, phase: "play" };
+      q.choices.forEach(function (n) {
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.textContent = String(n);
+        btn.addEventListener("click", function () { pickNumber(c, n); });
+        choicesEl.appendChild(btn);
+      });
+    }
+    meet.hidden = false;
+  }
+
+  function showNotice(c) {
+    clearQuizBits();
+    setTag("Hello!", "");
+    meetName.textContent = "";
+    meetAsk.textContent = "";
+    meetWord.textContent = "";
+    meetFact.textContent = "";
+    c.wave = { t: 0, dur: 0.7 };
+    meet.hidden = false;
+    shownId = c.id;
+  }
+
+  function showMedal(area) {
+    clearQuizBits();
+    setTag("Medal!", "cheer");
+    meetName.textContent = area.title;
+    meetAsk.textContent = "Every friend here is found.";
+    meetWord.textContent = "";
+    meetFact.textContent = "";
+    meet.hidden = false;
+    shownId = "medal";
+    cheerUntil = performance.now() + 2600;
+  }
+
+  function showEnding() {
+    if (endingOn || endingDone) return;
+    endingOn = true;
+    notice = null;
+    clearQuizBits();
+    setTag("Yes!", "cheer");
+    meetName.textContent = "They are all on show.";
+    meetAsk.textContent = "";
+    meetWord.textContent = "";
+    meetFact.textContent = "Frank filled the guide.";
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "ready";
+    btn.textContent = "Walk on";
+    btn.addEventListener("click", function () {
+      endingOn = false;
+      endingDone = true;
+      meet.hidden = true;
+      shownId = null;
+      persist();
+    });
+    choicesEl.appendChild(btn);
+    meet.hidden = false;
+    shownId = "ending";
+  }
+
+  function maybeEnding() {
+    if (player.area !== "museum" || endingOn || endingDone) return;
+    if (seen.size < friendTotal()) return;
+    showEnding();
+  }
+
+  function showQuestion(c) {
+    var q = QUIZ[c.id];
+    clearQuizBits();
+    setTag("", "");
+    meetName.textContent = q.kind === "spell" ? "New friend" : c.name;
+    meetAsk.textContent = q.job;
+    meetWord.textContent = "";
+    meetFact.textContent = "";
+    quiz = { id: c.id, phase: "job" };
+    var ready = document.createElement("button");
+    ready.type = "button";
+    ready.className = "ready";
+    ready.textContent = "Ready";
+    ready.addEventListener("click", function () { showQuizPlay(c); });
+    choicesEl.appendChild(ready);
+    meet.hidden = false;
+    speakLine(q.kind === "spell" ? q.job : (q.prompt || q.job), 0.92);
+  }
+
+  function showFinish() {
+    if (shownId === "finish" && !meet.hidden) return;
+    shownId = "finish";
+    clearQuizBits();
+    setTag("Yes!", "cheer");
+    meetName.textContent = "You did it!";
+    meetAsk.textContent = "";
+    meetWord.textContent = "";
+    meetFact.textContent = "Every friend is in your journal.";
+    meet.hidden = false;
+  }
+
+  function sayShutDoor(area) {
+    var museumExit = null;
+    if (area.exits) {
+      area.exits.forEach(function (ex) { if (ex.to === "museum") museumExit = ex; });
+    }
+    var doorY0 = museumExit ? museumExit.y0 : GATE_Y0;
+    var doorY1 = museumExit ? museumExit.y1 : GATE_Y1;
+    var atDoor = area.id === "hollow" && !cape && !capeDone && player.x > area.w - 70 && player.y > doorY0 && player.y < doorY1;
+    if (!atDoor) {
+      if (shownId === "shut-door") {
+        meet.hidden = true;
+        shownId = null;
+      }
+      return;
+    }
+    if (shownId === "shut-door" && !meet.hidden) return;
+    clearQuizBits();
+    setTag("", "");
+    meetName.textContent = "The shy one is still hiding.";
+    meetAsk.textContent = "";
+    meetWord.textContent = "";
+    meetFact.textContent = "";
+    meet.hidden = false;
+    shownId = "shut-door";
+  }
+
+  function updateMeet() {
+    if (placeMode) {
+      meet.hidden = true;
+      notice = null;
+      return;
+    }
+    if (journalOpen || mapOpen) {
+      meet.hidden = true;
+      return;
+    }
+    if (endingOn) return;
+    if (cheerUntil && performance.now() < cheerUntil) return;
+    var c = nearest();
+    if (!c) {
+      if (shownId === "shut-door") return;
+      meet.hidden = true;
+      shownId = null;
+      quiz = null;
+      notice = null;
+      greeted = null;
+      return;
+    }
+    if (c.clearing) {
+      if (shownId !== c.id || meet.hidden) showHello(c, true);
+      shownId = c.id;
+      return;
+    }
+    if (!seen.has(c.id)) {
+      if (notice && notice.id === c.id) return;
+      if (greeted === c.id) {
+        if (shownId === c.id && !meet.hidden) return;
+        showQuestion(c);
+        return;
+      }
+      notice = { id: c.id, t: 0 };
+      showNotice(c);
+      return;
+    }
+    notice = null;
+    greeted = null;
+    if (shownId === c.id && !meet.hidden) return;
+    shownId = c.id;
+    showHello(c, false);
+  }
+
+  function placeDone(area) {
+    var list = mainCreatures(area);
+    var i;
+    for (i = 0; i < list.length; i++) {
+      if (!seen.has(list[i].id)) return false;
+    }
+    return true;
+  }
+
+  function guidePage(c) {
+    var q = QUIZ[c.id];
+    var art = document.createElement("article");
+    art.className = "guide";
+    var known = seen.has(c.id);
+    if (!known) {
+      art.classList.add("empty");
+      var ghost = document.createElement("img");
+      ghost.className = "ghost";
+      ghost.src = "img/" + c.img + ".png";
+      ghost.alt = "";
+      var emptyText = document.createElement("div");
+      emptyText.className = "text";
+      var eh = document.createElement("h4");
+      eh.textContent = "Still to find";
+      emptyText.appendChild(eh);
+      art.appendChild(ghost);
+      art.appendChild(emptyText);
+      return art;
+    }
+    var img = document.createElement("img");
+    img.src = "img/" + c.img + ".png";
+    img.alt = "";
+    var text = document.createElement("div");
+    text.className = "text";
+    var h4 = document.createElement("h4");
+    h4.textContent = q && q.kind === "spell" ? q.word : c.name;
+    text.appendChild(h4);
+    var lines = c.facts && c.facts.length ? c.facts : [c.fact];
+    var li;
+    for (li = 0; li < lines.length; li++) {
+      var line = document.createElement("p");
+      line.textContent = lines[li];
+      text.appendChild(line);
+    }
+    if (q && q.kind === "spell") {
+      var stamp = document.createElement("span");
+      stamp.className = "stamp";
+      stamp.textContent = "Spelled";
+      text.appendChild(stamp);
+    }
+    art.appendChild(img);
+    art.appendChild(text);
+    return art;
+  }
+
+  function renderJournal() {
+    journalBody.replaceChildren();
+    var total = seen.size;
+    var places = 0;
+    ORDER.forEach(function (id) { if (placeDone(AREAS[id])) places += 1; });
+    var lead = document.createElement("p");
+    lead.className = "lead";
+    if (total === 0) lead.textContent = "Empty pages mean there is more to find.";
+    else {
+      lead.textContent = total + (total === 1 ? " friend." : " friends.");
+      if (places) lead.textContent += " " + places + (places === 1 ? " place stamped." : " places stamped.");
+    }
+    journalBody.appendChild(lead);
+    ORDER.forEach(function (id) {
+      var area = AREAS[id];
+      var h = document.createElement("h3");
+      h.textContent = area.title + (player.area === id ? " · you are here" : "");
+      if (placeDone(area)) {
+        var stamp = document.createElement("span");
+        stamp.className = "placeStamp";
+        stamp.textContent = "Medal";
+        h.appendChild(stamp);
+      }
+      journalBody.appendChild(h);
+      mainCreatures(area).forEach(function (c) {
+        journalBody.appendChild(guidePage(c));
+      });
+      area.creatures.forEach(function (c) {
+        if (c.side && seen.has(c.id)) journalBody.appendChild(guidePage(c));
+      });
+    });
+    var flowerHead = document.createElement("h3");
+    flowerHead.textContent = "Flowers";
+    journalBody.appendChild(flowerHead);
+    var anyFlower = false;
+    BLOOMS.forEach(function (b) {
+      if (!picked.has(b.id)) return;
+      anyFlower = true;
+      var row = document.createElement("p");
+      row.textContent = b.name;
+      journalBody.appendChild(row);
+    });
+    if (!anyFlower) {
+      var none = document.createElement("p");
+      none.className = "none";
+      none.textContent = "None pressed yet.";
+      journalBody.appendChild(none);
+    }
+  }
+
+  function renderMap() {
+    var area = areaNow();
+    var dprMap = Math.min(2, window.devicePixelRatio || 1);
+    mapCanvas.style.width = "100%";
+    var cssW = mapCanvas.clientWidth;
+    if (cssW < 80) cssW = Math.min(420, window.innerWidth - 48);
+    var scale = cssW / area.w;
+    var cssH = Math.max(120, Math.round(area.h * scale));
+    mapCanvas.style.height = cssH + "px";
+    mapCanvas.width = Math.max(1, Math.round(cssW * dprMap));
+    mapCanvas.height = Math.max(1, Math.round(cssH * dprMap));
+    var g = mapCanvas.getContext("2d");
+    g.setTransform(dprMap, 0, 0, dprMap, 0, 0);
+    g.clearRect(0, 0, cssW, cssH);
+    g.fillStyle = area.ground || "#c5d6a0";
+    g.fillRect(0, 0, cssW, cssH);
+    function sx(x) { return x * scale; }
+    function sy(y) { return y * scale; }
+    var plate = area.plate && imgs[area.plate];
+    if (plate && plate.naturalWidth) {
+      g.drawImage(plate, 0, 0, cssW, cssH);
+    }
+    if (area.id === "meadow") {
+      g.lineCap = "round";
+      g.lineJoin = "round";
+      g.strokeStyle = "rgba(146, 96, 48, 0.95)";
+      g.lineWidth = Math.max(3, 110 * scale);
+      g.beginPath();
+      g.moveTo(sx(MEADOW_TRACK[0][0]), sy(MEADOW_TRACK[0][1]));
+      for (var pi = 1; pi < MEADOW_TRACK.length; pi++) g.lineTo(sx(MEADOW_TRACK[pi][0]), sy(MEADOW_TRACK[pi][1]));
+      g.stroke();
+    }
+    if (!(plate && plate.naturalWidth)) {
+      var rects = area.corridors && area.corridors.length ? area.corridors : [{ x: 0, y: 0, w: area.w, h: area.h }];
+      g.fillStyle = "#6b4a2a";
+      rects.forEach(function (r) {
+        g.beginPath();
+        g.roundRect(sx(r.x), sy(r.y), Math.max(1, r.w * scale), Math.max(1, r.h * scale), 3);
+        g.fill();
+      });
+      g.fillStyle = area.path || "#e2c088";
+      rects.forEach(function (r) {
+        var inset = 2;
+        g.beginPath();
+        g.roundRect(sx(r.x) + inset, sy(r.y) + inset, Math.max(1, r.w * scale - inset * 2), Math.max(1, r.h * scale - inset * 2), 2);
+        g.fill();
+      });
+    }
+    g.font = "800 12px Nunito, Trebuchet MS, sans-serif";
+    g.textAlign = "center";
+    g.textBaseline = "middle";
+    g.fillStyle = "#3c3126";
+    area.exits.forEach(function (ex) {
+      var title = SIGN[ex.to] || ex.to;
+      var label = title;
+      var x;
+      var y;
+      if (ex.side === "east") {
+        label = title + " →";
+        y = sy((ex.y0 + ex.y1) / 2);
+        x = cssW - 8 - g.measureText(label).width / 2;
+      } else if (ex.side === "west") {
+        label = "← " + title;
+        y = sy((ex.y0 + ex.y1) / 2);
+        x = 8 + g.measureText(label).width / 2;
+      } else if (ex.side === "north") {
+        label = title + " ↑";
+        x = sx((ex.x0 + ex.x1) / 2);
+        y = 14;
+      } else {
+        label = title + " ↓";
+        x = sx((ex.x0 + ex.x1) / 2);
+        y = cssH - 14;
+      }
+      g.fillText(label, x, y);
+    });
+    var px = sx(player.x);
+    var py = sy(player.y);
+    g.fillStyle = "#d23b32";
+    g.beginPath();
+    g.arc(px, py, 5, 0, Math.PI * 2);
+    g.fill();
+    g.strokeStyle = "#fff6ea";
+    g.lineWidth = 2;
+    g.stroke();
+    g.fillStyle = "#3c3126";
+    g.font = "800 11px Nunito, Trebuchet MS, sans-serif";
+    var here = "you are here";
+    var lx = px;
+    var ly = py - 14;
+    if (ly < 12) ly = py + 14;
+    var hw = g.measureText(here).width / 2;
+    if (lx < hw + 4) lx = hw + 4;
+    if (lx > cssW - hw - 4) lx = cssW - hw - 4;
+    g.fillText(here, lx, ly);
+  }
+
+  function openMap() {
+    if (journalOpen) closeJournal();
+    mapOpen = true;
+    heldKeys.clear();
+    clearPad();
+    mapSheet.style.top = document.querySelector("header").offsetHeight + "px";
+    mapSheet.hidden = false;
+    mapBtn.textContent = "Close";
+    meet.hidden = true;
+    renderMap();
+  }
+
+  function closeMap() {
+    mapOpen = false;
+    mapSheet.hidden = true;
+    mapBtn.textContent = "Map";
+    shownId = null;
+  }
+
+  function toggleMap() {
+    if (titleOn || gateWalk) return;
+    if (mapOpen) closeMap();
+    else openMap();
+  }
+
+  function openJournal() {
+    journalOpen = true;
+    heldKeys.clear();
+    clearPad();
+    journal.style.top = document.querySelector("header").offsetHeight + "px";
+    journal.hidden = false;
+    journalBtn.textContent = "Close";
+    journalBtn.setAttribute("aria-expanded", "true");
+    meet.hidden = true;
+    renderJournal();
+  }
+  function closeJournal() {
+    journalOpen = false;
+    journal.hidden = true;
+    journalBtn.textContent = "Journal";
+    journalBtn.setAttribute("aria-expanded", "false");
+    shownId = null;
+  }
+  function toggleJournal() {
+    if (titleOn || gateWalk) return;
+    if (journalOpen) closeJournal();
+    else openJournal();
+  }
+  function resetJournal() {
+    if (!window.confirm("Empty the journal and start the walk again?")) return;
+    seen.clear();
+    picked.clear();
+    endingDone = false;
+    endingOn = false;
+    cape = null;
+    capeDone = false;
+    gateWalk = null;
+    ORDER.forEach(function (id) {
+      AREAS[id].creatures.forEach(function (c) { c.clearing = null; });
+    });
+    player.area = "garden";
+    player.x = 160;
+    player.y = PATH_Y;
+    player.facing = "right";
+    player.pose = "idle";
+    placeName.textContent = AREAS.garden.title;
+    stage.style.background = AREAS.garden.ground;
+    saveSeen();
+    startMusic();
+    shownId = null;
+    clearQuizBits();
+    setTag("", "");
+    meetName.textContent = "";
+    meetAsk.textContent = "";
+    meetWord.textContent = "";
+    meetFact.textContent = "";
+    meet.hidden = true;
+    if (journalOpen) closeJournal();
+    enterGame();
+  }
+  journalBtn.addEventListener("click", toggleJournal);
+  journalBack.addEventListener("click", closeJournal);
+  document.getElementById("resetJournal").addEventListener("click", resetJournal);
+  mapBtn.addEventListener("click", toggleMap);
+  document.getElementById("mapBack").addEventListener("click", closeMap);
+  mapSheet.addEventListener("click", function (e) {
+    if (e.target === mapSheet) closeMap();
+  });
+  journal.addEventListener("click", function (e) {
+    if (e.target === journal) closeJournal();
+  });
+
+  function strokePath(pts) {
+    ctx.beginPath();
+    ctx.moveTo(pts[0][0], pts[0][1]);
+    for (var i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+    ctx.stroke();
+  }
+
+  function flower(x, y, color, s) {
+    ctx.fillStyle = color;
+    var i;
+    for (i = 0; i < 5; i++) {
+      var a = (i / 5) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.arc(x + Math.cos(a) * 5 * s, y + Math.sin(a) * 5 * s, 3.1 * s, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.fillStyle = "#ffe27a";
+    ctx.beginPath();
+    ctx.arc(x, y, 2.3 * s, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function tuft(x, y, s, color) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.quadraticCurveTo(x - 4 * s, y - 8 * s, x - 7 * s, y - 14 * s);
+    ctx.moveTo(x, y);
+    ctx.quadraticCurveTo(x + 1 * s, y - 10 * s, x, y - 16 * s);
+    ctx.moveTo(x, y);
+    ctx.quadraticCurveTo(x + 4 * s, y - 8 * s, x + 7 * s, y - 13 * s);
+    ctx.stroke();
+  }
+
+  function hash(n) {
+    var x = Math.sin(n * 12.9898) * 43758.5453;
+    return x - Math.floor(x);
+  }
+
+  function blob(cx, cy, rx, ry, seed, lobes) {
+    var n = lobes || 8;
+    var i;
+    ctx.beginPath();
+    for (i = 0; i <= n; i++) {
+      var a = (i / n) * Math.PI * 2;
+      var wob = 0.78 + hash(seed + i * 2.3) * 0.36;
+      var x = cx + Math.cos(a) * rx * wob;
+      var y = cy + Math.sin(a) * ry * wob;
+      if (i === 0) ctx.moveTo(x, y);
+      else {
+        var am = ((i - 0.5) / n) * Math.PI * 2;
+        var wm = 0.7 + hash(seed + i * 4.1) * 0.45;
+        ctx.quadraticCurveTo(cx + Math.cos(am) * rx * wm, cy + Math.sin(am) * ry * wm, x, y);
+      }
+    }
+    ctx.closePath();
+  }
+
+  function bush(b) {
+    var r = b.r;
+    var s = b.x * 0.17 + b.y * 0.13;
+    ctx.fillStyle = "rgba(48, 32, 16, 0.2)";
+    blob(b.x, b.y + r * 0.4, r * 0.72, r * 0.2, s, 7);
+    ctx.fill();
+    var lumps = [
+      [0.04, 0.02, 0.58, 0.46, "#1c5a28"],
+      [-0.28, -0.06, 0.4, 0.34, "#2f7a34"],
+      [0.26, 0.0, 0.38, 0.32, "#246b30"],
+      [-0.06, -0.28, 0.44, 0.32, "#3d9144"],
+      [0.16, -0.22, 0.3, 0.24, "#67b85a"]
+    ];
+    var i;
+    for (i = 0; i < lumps.length; i++) {
+      var L = lumps[i];
+      ctx.fillStyle = L[4];
+      blob(b.x + r * L[0], b.y + r * L[1], r * L[2], r * L[3], s + i * 9, 7);
+      ctx.fill();
+    }
+    ctx.strokeStyle = "rgba(18, 58, 24, 0.4)";
+    ctx.lineWidth = Math.max(1.5, r * 0.045);
+    ctx.lineCap = "round";
+    var k;
+    for (k = 0; k < 4; k++) {
+      ctx.beginPath();
+      ctx.moveTo(b.x + (hash(s + k) - 0.5) * r * 0.4, b.y + r * 0.05);
+      ctx.quadraticCurveTo(
+        b.x + (hash(s + k + 2) - 0.5) * r * 0.7,
+        b.y - r * 0.35,
+        b.x + (hash(s + k + 5) - 0.5) * r * 0.55,
+        b.y - r * 0.58
+      );
+      ctx.stroke();
+    }
+  }
+
+  function drawPond(b) {
+    var r = b.r + 14;
+    var s = b.x * 0.05 + b.y;
+    ctx.fillStyle = "rgba(40, 30, 16, 0.16)";
+    blob(b.x + 4, b.y + 8, r + 8, r * 0.5, s, 9);
+    ctx.fill();
+    ctx.fillStyle = "#b88958";
+    blob(b.x, b.y, r + 12, r * 0.72, s + 2, 10);
+    ctx.fill();
+    ctx.fillStyle = "#c4a06a";
+    blob(b.x - 2, b.y - 2, r + 4, r * 0.6, s + 3, 9);
+    ctx.fill();
+    var water = ctx.createLinearGradient(b.x, b.y - r, b.x, b.y + r);
+    water.addColorStop(0, "#9ed8ea");
+    water.addColorStop(0.55, "#3e8eb0");
+    water.addColorStop(1, "#2a6e90");
+    ctx.fillStyle = water;
+    blob(b.x, b.y, r - 2, (r - 2) * 0.62, s + 6, 10);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,0.55)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(b.x - r * 0.35, b.y - r * 0.08);
+    ctx.quadraticCurveTo(b.x - r * 0.05, b.y - r * 0.22, b.x + r * 0.2, b.y - r * 0.04);
+    ctx.stroke();
+    ctx.strokeStyle = "rgba(255,255,255,0.35)";
+    ctx.beginPath();
+    ctx.moveTo(b.x - r * 0.1, b.y + r * 0.16);
+    ctx.quadraticCurveTo(b.x + r * 0.15, b.y + r * 0.02, b.x + r * 0.32, b.y + r * 0.18);
+    ctx.stroke();
+    ctx.fillStyle = "#2f7a34";
+    blob(b.x + r * 0.28, b.y + r * 0.08, 14, 9, s + 11, 6);
+    ctx.fill();
+    ctx.fillStyle = "#67b85a";
+    blob(b.x + r * 0.22, b.y + r * 0.02, 8, 5, s + 12, 5);
+    ctx.fill();
+    ctx.fillStyle = "#f4b6d0";
+    blob(b.x + r * 0.3, b.y + r * 0.1, 4, 3, s + 13, 5);
+    ctx.fill();
+  }
+
+  function drawTree(x, y, s) {
+    ctx.fillStyle = "rgba(40, 28, 12, 0.25)";
+    ctx.beginPath();
+    ctx.ellipse(x, y + 10 * s, 16 * s, 5 * s, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#6b4424";
+    ctx.fillRect(x - 4 * s, y - 4 * s, 8 * s, 18 * s);
+    ctx.fillStyle = "#8d5a34";
+    ctx.fillRect(x - 3 * s, y - 2 * s, 3 * s, 14 * s);
+    ctx.fillStyle = "#145c28";
+    blob(x, y - 16 * s, 18 * s, 14 * s, x + y, 7);
+    ctx.fill();
+    ctx.fillStyle = "#1e6a30";
+    blob(x - 8 * s, y - 12 * s, 12 * s, 10 * s, x, 6);
+    ctx.fill();
+    ctx.fillStyle = "#3d9144";
+    blob(x + 7 * s, y - 18 * s, 10 * s, 8 * s, y, 6);
+    ctx.fill();
+  }
+
+  function drawRock(x, y, s) {
+    var seed = x * 0.2 + y;
+    ctx.fillStyle = "rgba(48, 32, 16, 0.2)";
+    blob(x, y + 8 * s, 16 * s, 6 * s, seed, 6);
+    ctx.fill();
+    ctx.fillStyle = "#7a5840";
+    blob(x + 2 * s, y + 3 * s, 18 * s, 13 * s, seed + 1, 7);
+    ctx.fill();
+    ctx.fillStyle = "#c6a27c";
+    blob(x - 1 * s, y - 1 * s, 14 * s, 9 * s, seed + 2, 7);
+    ctx.fill();
+    ctx.fillStyle = "#f0d8bc";
+    blob(x - 5 * s, y - 4 * s, 6 * s, 3.5 * s, seed + 3, 5);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(90, 58, 36, 0.45)";
+    ctx.lineWidth = Math.max(1, 1.5 * s);
+    ctx.beginPath();
+    ctx.moveTo(x - 6 * s, y + 2 * s);
+    ctx.quadraticCurveTo(x, y + 6 * s, x + 8 * s, y + 1 * s);
+    ctx.stroke();
+  }
+
+  function drawFern(x, y, s) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(s, s);
+    ctx.fillStyle = "rgba(30, 24, 12, 0.16)";
+    blob(2, 8, 12, 4, x + y, 6);
+    ctx.fill();
+    function frond(ang, len, color) {
+      ctx.save();
+      ctx.rotate(ang);
+      ctx.strokeStyle = "#1d4a24";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.quadraticCurveTo(len * 0.2, -len * 0.7, 0, -len);
+      ctx.stroke();
+      ctx.fillStyle = color;
+      var i;
+      for (i = 1; i <= 4; i++) {
+        var yy = -len * (i / 5);
+        blob(-5, yy, 6, 3, x + i + ang * 5, 5);
+        ctx.fill();
+        blob(5, yy - 2, 6, 3, y + i + ang * 3, 5);
+        ctx.fill();
+      }
+      ctx.fillStyle = "#b7e2a4";
+      blob(-2, -len + 2, 3, 2, x + ang, 4);
+      ctx.fill();
+      ctx.restore();
+    }
+    frond(-0.7, 22, "#1f5c28");
+    frond(0.05, 28, "#2f7a34");
+    frond(0.75, 22, "#3f8f46");
+    ctx.restore();
+  }
+
+  function drawPrint(x, y, rot) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rot);
+    ctx.fillStyle = "rgba(120, 78, 40, 0.28)";
+    ctx.beginPath();
+    ctx.ellipse(0, 2, 8, 11, 0, 0, Math.PI * 2);
+    ctx.fill();
+    var i;
+    for (i = -1; i <= 1; i++) {
+      ctx.beginPath();
+      ctx.ellipse(i * 7, -10, 3.2, 4.2, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function wildCam(area) {
+    // 90% of the 140px framing, so Frank is about 126px and a bit more ground shows.
+    var sc = (1152 / 1200) * 0.9;
+    var fit = Math.min(viewW / area.w, viewH / area.h);
+    if (sc <= fit) sc = fit * 1.12;
+    if (placeMode) sc = sc * placeZoom;
+    var worldW = viewW / sc;
+    var worldH = viewH / sc;
+    var camXw = 0;
+    var camYw = 0;
+    var ox = 0;
+    var oy = 0;
+    if (area.w * sc <= viewW) ox = (viewW - area.w * sc) / 2;
+    else {
+      camXw = clamp(player.x - worldW / 2, 0, area.w - worldW);
+      ox = -camXw * sc;
+    }
+    if (area.h * sc <= viewH) oy = (viewH - area.h * sc) / 2;
+    else {
+      camYw = clamp(player.y - worldH / 2, 0, area.h - worldH);
+      oy = -camYw * sc;
+    }
+    return { sc: sc, camX: camXw, camY: camYw, ox: ox, oy: oy };
+  }
+
+  function drawWoodSign(x, y, label, fontPx) {
+    ctx.font = "800 " + fontPx + "px Nunito, Trebuchet MS, sans-serif";
+    var bw = Math.ceil(ctx.measureText(label).width) + Math.round(fontPx * 1.7);
+    var bh = Math.round(fontPx * 1.85);
+    var postW = Math.max(5, Math.round(fontPx * 0.42));
+    var postH = Math.round(fontPx * 1.45);
+    ctx.fillStyle = "rgba(40, 26, 12, 0.22)";
+    ctx.beginPath();
+    ctx.ellipse(x + 2, y + postH - 1, bw * 0.18, postW * 0.42, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#4e321c";
+    ctx.fillRect(x - postW / 2, y - 1, postW, postH);
+    ctx.fillStyle = "#6b4a2c";
+    ctx.fillRect(x - postW / 2, y - 1, Math.max(2, postW * 0.34), postH);
+    var top = y - bh - Math.round(fontPx * 0.2);
+    var left = x - bw / 2;
+    ctx.fillStyle = "#4a3018";
+    ctx.beginPath();
+    ctx.roundRect(left - 2, top - 2, bw + 4, bh + 4, 3);
+    ctx.fill();
+    ctx.fillStyle = "#a56b3c";
+    ctx.beginPath();
+    ctx.roundRect(left, top, bw, bh, 2);
+    ctx.fill();
+    ctx.fillStyle = "#c4894e";
+    ctx.fillRect(left + 2, top + 2, bw - 4, Math.max(3, bh * 0.22));
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(left + 1, top + 1, bw - 2, bh - 2);
+    ctx.clip();
+    ctx.strokeStyle = "rgba(74, 42, 18, 0.35)";
+    ctx.lineWidth = Math.max(1, fontPx * 0.06);
+    var gy;
+    for (gy = top + 5; gy < top + bh - 3; gy += Math.max(3, fontPx * 0.28)) {
+      ctx.beginPath();
+      ctx.moveTo(left + 3, gy);
+      ctx.quadraticCurveTo(x, gy + fontPx * 0.12, left + bw - 3, gy - fontPx * 0.05);
+      ctx.stroke();
+    }
+    ctx.restore();
+    ctx.fillStyle = "#3a2718";
+    var nail = Math.max(1.3, fontPx * 0.11);
+    ctx.beginPath();
+    ctx.arc(left + nail + 4, top + nail + 3, nail, 0, Math.PI * 2);
+    ctx.arc(left + bw - nail - 4, top + nail + 3, nail, 0, Math.PI * 2);
+    ctx.arc(left + nail + 4, top + bh - nail - 3, nail, 0, Math.PI * 2);
+    ctx.arc(left + bw - nail - 4, top + bh - nail - 3, nail, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#24180f";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(label, x, top + bh / 2 + 1);
+  }
+
+  function drawSignScreen(s) {
+    var cam = wildCam(areaNow());
+    var label = s.dir > 0 ? s.text + " →" : s.dir < 0 ? "← " + s.text : s.text + " ↑";
+    ctx.save();
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var fontPx = 16;
+    ctx.font = "800 " + fontPx + "px Nunito, Trebuchet MS, sans-serif";
+    var bw = Math.ceil(ctx.measureText(label).width) + Math.round(fontPx * 1.7);
+    var bh = Math.round(fontPx * 1.85);
+    var postH = Math.round(fontPx * 1.45);
+    var x = cam.ox + s.x * cam.sc;
+    var y = cam.oy + s.y * cam.sc;
+    if (x < -bw || x > viewW + bw || y - bh > viewH + 8 || y + postH < -8) {
+      ctx.restore();
+      return;
+    }
+    if (x - bw / 2 < 8) x = 8 + bw / 2;
+    if (x + bw / 2 > viewW - 8) x = viewW - 8 - bw / 2;
+    if (y - bh - 4 < 8) y = bh + 12;
+    if (y + postH > viewH - 6) y = viewH - 6 - postH;
+    drawWoodSign(x, y, label, fontPx);
+    ctx.restore();
+  }
+
+  function drawSign(s) {
+    if (areaNow().plate) {
+      drawSignScreen(s);
+      return;
+    }
+    var label = s.dir > 0 ? s.text + " →" : s.dir < 0 ? "← " + s.text : s.text + " ↑";
+    ctx.font = "800 15px Nunito, Trebuchet MS, sans-serif";
+    var w = Math.ceil(ctx.measureText(label).width) + 22;
+    var area = areaNow();
+    var x = s.x;
+    var y = s.y;
+    if (x - w / 2 < 10) x = 10 + w / 2;
+    if (x + w / 2 > area.w - 10) x = area.w - 10 - w / 2;
+    ctx.fillStyle = area.kind === "desert" ? "#6aaa45" : "#3f8f3a";
+    blob(x, y + 4, Math.max(36, w * 0.42), 22, x + y, 7);
+    ctx.fill();
+    ctx.fillStyle = "#8fbf62";
+    blob(x - 8, y - 2, 16, 8, x, 5);
+    ctx.fill();
+    ctx.fillStyle = "rgba(48, 32, 16, 0.2)";
+    ctx.beginPath();
+    ctx.ellipse(x, y + 28, w * 0.36, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+    drawWoodSign(x, y, label, 15);
+  }
+
+  function drawObstacle(c) {
+    if (c.side || !c.obstacle) return;
+    if (seen.has(c.id) && !c.clearing) return;
+    var p = c.clearing ? Math.min(1, c.clearing.t / c.clearing.dur) : 0;
+    var x = c.gate;
+    var y = PATH_Y;
+    if (c.obstacle === "branch") {
+      ctx.save();
+      ctx.translate(x, y + p * 70);
+      ctx.rotate(-0.35 + p * 1.7);
+      ctx.globalAlpha = 1 - p * 0.55;
+      ctx.fillStyle = "#8a5a32";
+      ctx.beginPath();
+      ctx.roundRect(-48, -9, 96, 18, 9);
+      ctx.fill();
+      ctx.fillStyle = "#6b4424";
+      ctx.beginPath();
+      ctx.arc(-42, 0, 8, 0, Math.PI * 2);
+      ctx.arc(40, -1, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    } else if (c.obstacle === "puddle") {
+      ctx.save();
+      ctx.globalAlpha = 1 - p;
+      ctx.translate(x, y + 2);
+      ctx.scale(Math.max(0.05, 1 - p * 0.9), Math.max(0.05, 1 - p * 0.9));
+      ctx.fillStyle = "#7ec8e6";
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 40, 16, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,0.5)";
+      ctx.beginPath();
+      ctx.ellipse(-10, -3, 12, 5, -0.4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    } else if (c.obstacle === "gate") {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.fillStyle = "#8d5a34";
+      ctx.fillRect(-30, -34, 8, 50);
+      ctx.fillRect(22, -34, 8, 50);
+      ctx.save();
+      ctx.translate(-26, -4);
+      ctx.rotate(-p * 1.4);
+      ctx.fillStyle = "#d7a15a";
+      ctx.beginPath();
+      ctx.roundRect(0, -6, 52, 14, 4);
+      ctx.fill();
+      ctx.restore();
+      ctx.restore();
+    } else {
+      ctx.save();
+      ctx.translate(p * 120, p * 18);
+      ctx.globalAlpha = 1 - p * 0.35;
+      ctx.strokeStyle = "#6f9a52";
+      ctx.lineWidth = 16;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(x - 46, y + 8);
+      ctx.quadraticCurveTo(x, y - 22, x + 48, y + 6);
+      ctx.stroke();
+      ctx.fillStyle = "#6f9a52";
+      ctx.beginPath();
+      ctx.arc(x + 48, y + 6, 9, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  function drawPteroTrail() {
+    var spots = AREAS.hollow.trail || [];
+    var i;
+    for (i = 0; i < spots.length; i++) {
+      if (!nearView(spots[i][0], spots[i][1], 36)) continue;
+      drawPrint(spots[i][0], spots[i][1], 0);
+    }
+  }
+
+  function drawCrack(area) {
+    if (area.id !== "hollow") return;
+    var x = 1072;
+    ctx.fillStyle = "#8d6a42";
+    ctx.beginPath();
+    ctx.ellipse(x, PATH_Y + 2, 48, 16, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#3e2c1e";
+    ctx.beginPath();
+    ctx.ellipse(x, PATH_Y + 5, 28, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawCapeFlare(x, y, amount) {
+    ctx.save();
+    ctx.translate(x, y - 78);
+    ctx.fillStyle = "#d23b32";
+    ctx.beginPath();
+    ctx.moveTo(0, 8);
+    ctx.quadraticCurveTo(-36 - amount * 80, -36, -18 - amount * 130, 52);
+    ctx.quadraticCurveTo(0, 30, 18 + amount * 130, 52);
+    ctx.quadraticCurveTo(36 + amount * 80, -36, 0, 8);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function shownSpot(c) {
+    if (cape && c.id === "pterosaur") {
+      var p = Math.min(1, cape.t / cape.dur);
+      var near = Math.sin(p * Math.PI);
+      return {
+        x: c.x + (player.x - 78 - c.x) * near * 0.55,
+        y: c.y + (player.y - c.y) * near * 0.55
+      };
+    }
+    return { x: c.x, y: c.y };
+  }
+
+  var LANE = 84;
+
+  function laneRect(r) {
+    if (r.w >= r.h) {
+      var cy = r.y + r.h / 2;
+      return { x: r.x, y: cy - LANE / 2, w: r.w, h: LANE, horiz: true };
+    }
+    var cx = r.x + r.w / 2;
+    return { x: cx - LANE / 2, y: r.y, w: LANE, h: r.h, horiz: false };
+  }
+
+  function woodPost(x, y, w, h) {
+    ctx.fillStyle = "#4e301c";
+    ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = "#8d5a34";
+    ctx.fillRect(x + 4, y, 8, h);
+    ctx.fillStyle = "#e7c99a";
+    ctx.fillRect(x + 6, y + 3, 4, Math.max(0, h - 6));
+  }
+
+  function paintArchAcross(gx, y0, y1, path, pathIn) {
+    var rise = 168;
+    var crown = y0 - rise;
+    var farX = gx - 58;
+    var nearX = gx + 40;
+    var openX = farX + 26;
+    var openW = (nearX - farX) - 24;
+    woodPost(farX, crown, 26, (y1 - crown) + 8);
+    woodPost(nearX, crown + 8, 28, (y1 - crown));
+    ctx.fillStyle = "#6b3e22";
+    ctx.beginPath();
+    ctx.moveTo(farX, crown + 20);
+    ctx.quadraticCurveTo(gx, crown - 34, nearX + 28, crown + 24);
+    ctx.lineTo(nearX + 28, crown + 46);
+    ctx.quadraticCurveTo(gx, crown - 8, farX, crown + 42);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = "#e7c99a";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(farX + 10, crown + 28);
+    ctx.quadraticCurveTo(gx, crown - 12, nearX + 12, crown + 32);
+    ctx.stroke();
+    ctx.fillStyle = "#6b4a2a";
+    ctx.fillRect(openX, y0 - 6, openW, (y1 - y0) + 12);
+    ctx.fillStyle = path || "#e2c088";
+    ctx.fillRect(openX, y0, openW, y1 - y0);
+    ctx.fillStyle = pathIn || "#f6e4b8";
+    ctx.fillRect(openX, y0 + 8, openW, y1 - y0 - 16);
+  }
+
+  function paintArchNorth(x0, x1, gy, path, pathIn) {
+    var rise = 150;
+    var top = gy - rise;
+    woodPost(x0 - 16, top, 24, rise + 18);
+    woodPost(x1 - 8, top, 24, rise + 18);
+    ctx.fillStyle = "#6b3e22";
+    ctx.beginPath();
+    ctx.moveTo(x0 - 16, top + 18);
+    ctx.quadraticCurveTo((x0 + x1) / 2, top - 36, x1 + 16, top + 18);
+    ctx.lineTo(x1 + 16, top + 40);
+    ctx.quadraticCurveTo((x0 + x1) / 2, top - 8, x0 - 16, top + 40);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = "#e7c99a";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(x0 - 4, top + 26);
+    ctx.quadraticCurveTo((x0 + x1) / 2, top - 12, x1 + 4, top + 26);
+    ctx.stroke();
+    var openX = x0 + 8;
+    var openW = (x1 - x0) - 16;
+    ctx.fillStyle = "#6b4a2a";
+    ctx.fillRect(openX, gy - 10, openW, 64);
+    ctx.fillStyle = path || "#e2c088";
+    ctx.fillRect(openX, gy - 4, openW, 52);
+    ctx.fillStyle = pathIn || "#f6e4b8";
+    ctx.fillRect(openX + 6, gy + 4, openW - 12, 36);
+  }
+
+  function drawGate(ex, area) {
+    var lane;
+    if (!area.corridors || !area.corridors.length) {
+      lane = { x: 0, y: PATH_Y - LANE / 2, w: area.w, h: LANE, horiz: true };
+    } else if (ex.side === "north") {
+      var nx = (ex.x0 + ex.x1) / 2;
+      lane = null;
+      area.corridors.forEach(function (r) {
+        if (r.y <= 4 && r.x <= nx && r.x + r.w >= nx) lane = { x: r.x, y: r.y, w: r.w, h: r.h, horiz: false };
+      });
+      if (!lane) lane = { x: nx - LANE / 2, y: 0, w: LANE, h: 400, horiz: false };
+    } else {
+      lane = null;
+      area.corridors.forEach(function (r) {
+        var touch = ex.side === "east" ? r.x + r.w >= area.w - 4 : r.x <= 4;
+        if (touch && r.y <= PATH_Y && r.y + r.h >= PATH_Y) lane = { x: r.x, y: r.y, w: r.w, h: r.h, horiz: true };
+      });
+      if (!lane) lane = { x: 0, y: PATH_Y - LANE / 2, w: area.w, h: LANE, horiz: true };
+    }
+    var path = area.path;
+    var pathIn = area.pathIn;
+    if (ex.side === "north") paintArchNorth(lane.x, lane.x + lane.w, Math.max(150, lane.y + 150), path, pathIn);
+    else if (ex.side === "east") paintArchAcross(lane.x + lane.w - 78, lane.y, lane.y + lane.h, path, pathIn);
+    else paintArchAcross(lane.x + 78, lane.y, lane.y + lane.h, path, pathIn);
+  }
+
+  function frankFrame(moving) {
+    if (!moving) return "idle";
+    return (Math.floor(player.phase / Math.PI) % 2 === 0) ? "walk1" : "walk2";
+  }
+
+  function drawFrank(x, y, facing, phase, moving, time) {
+    var pose = frankFrame(moving);
+    var img = imgs.frank;
+    if (pose === "walk1" && imgs["frank-walk-1"] && imgs["frank-walk-1"].naturalWidth) img = imgs["frank-walk-1"];
+    if (pose === "walk2" && imgs["frank-walk-2"] && imgs["frank-walk-2"].naturalWidth) img = imgs["frank-walk-2"];
+    var bob = moving ? Math.abs(Math.sin(phase)) * 3 : Math.sin(time / 500) * 1.1;
+    var ih = areaNow().plate ? 146 : 188;
+    var iw = 104;
+    if (img && img.naturalWidth) iw = img.naturalWidth / img.naturalHeight * ih;
+    ctx.fillStyle = "rgba(48, 32, 16, 0.22)";
+    ctx.beginPath();
+    ctx.ellipse(x, y + 4, Math.max(22, iw * 0.38), 9, 0, 0, Math.PI * 2);
+    ctx.fill();
+    if (cape) drawCapeFlare(x, y + bob, Math.sin(Math.min(1, cape.t / cape.dur) * Math.PI));
+    if (!(img && img.naturalWidth)) return;
+    var face = facing === "left" ? -1 : 1;
+    var pivot = iw * (103 / 153);
+    ctx.save();
+    ctx.translate(x, y + bob);
+    ctx.scale(face, 1);
+    ctx.drawImage(img, -pivot, -ih, iw, ih);
+    ctx.restore();
+  }
+
+  function drawCreature(c, time) {
+    var spot = shownSpot(c);
+    var img = imgs[c.img];
+    var bob = Math.sin(time / 380 + c.x * 0.01) * 2.5;
+    if (c.hop) bob -= Math.sin(Math.min(1, c.hop.t / c.hop.dur) * Math.PI) * 26;
+    if (c.wave) bob -= Math.sin(Math.min(1, c.wave.t / c.wave.dur) * Math.PI) * 12;
+    var ih = c.h;
+    var iw = ih;
+    if (img && img.naturalWidth) iw = img.naturalWidth / img.naturalHeight * ih;
+    ctx.fillStyle = "rgba(48, 32, 16, 0.2)";
+    ctx.beginPath();
+    ctx.ellipse(spot.x, spot.y + 4, Math.max(18, iw * 0.28), 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    if (img && img.naturalWidth) {
+      ctx.drawImage(img, spot.x - iw / 2, spot.y - ih + bob, iw, ih);
+    }
+    if (c.wave) {
+      ctx.strokeStyle = "#f2c14d";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(spot.x + iw * 0.32, spot.y - ih * 0.62 + bob, 12, Math.PI * 1.1, Math.PI * 1.9);
+      ctx.stroke();
+    }
+    if (seen.has(c.id)) {
+      ctx.fillStyle = "#f2c14d";
+      ctx.beginPath();
+      ctx.arc(spot.x, spot.y - ih - 8 + bob, 5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function drawMuseumRoom(time) {
+    var room = AREAS.museum;
+    ctx.fillStyle = "#efe2c4";
+    ctx.fillRect(0, 0, room.w, room.h);
+    ctx.fillStyle = "#fff6ea";
+    ctx.beginPath();
+    ctx.roundRect(36, 72, room.w - 72, room.h - 150, 28);
+    ctx.fill();
+    ctx.strokeStyle = "#e4c99a";
+    ctx.lineWidth = 8;
+    ctx.stroke();
+    ctx.fillStyle = "#c4a574";
+    ctx.beginPath();
+    ctx.roundRect(0, PATH_Y - LANE / 2 - 8, room.w, LANE + 16, 12);
+    ctx.fill();
+    ctx.fillStyle = "#e7c99a";
+    ctx.beginPath();
+    ctx.roundRect(0, PATH_Y - LANE / 2, room.w, LANE, 10);
+    ctx.fill();
+    ctx.fillStyle = "#f6e6c4";
+    ctx.beginPath();
+    ctx.roundRect(8, PATH_Y - LANE / 2 + 8, room.w - 16, LANE - 16, 8);
+    ctx.fill();
+    var museumGate = AREAS.museum.exits;
+    DISPLAYS.forEach(function (d) {
+      var found = seen.has(d.id);
+      var cw = 78;
+      var ch = 100;
+      var left = d.x - cw / 2;
+      var top = d.y - ch + 8;
+      ctx.fillStyle = "rgba(48, 32, 16, 0.18)";
+      ctx.beginPath();
+      ctx.roundRect(left + 6, d.y + 2, cw - 8, 12, 4);
+      ctx.fill();
+      ctx.fillStyle = "#6b3e22";
+      ctx.beginPath();
+      ctx.roundRect(left, top, cw, ch, 8);
+      ctx.fill();
+      ctx.fillStyle = "#c4a574";
+      ctx.fillRect(left + 5, top + 5, cw - 10, 10);
+      ctx.fillStyle = "rgba(214, 232, 226, 0.5)";
+      ctx.fillRect(left + 7, top + 18, cw - 14, ch - 32);
+      ctx.strokeStyle = "rgba(255,255,255,0.7)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(left + 12, top + 24);
+      ctx.lineTo(left + 24, top + 48);
+      ctx.stroke();
+      ctx.fillStyle = "#8d5a34";
+      ctx.fillRect(left + 8, d.y - 16, cw - 16, 10);
+      if (!found) return;
+      var img = imgs[d.id];
+      var ih = 70;
+      var iw = ih;
+      if (img && img.naturalWidth) iw = img.naturalWidth / img.naturalHeight * ih;
+      if (img && img.naturalWidth) ctx.drawImage(img, d.x - iw / 2, d.y - ih - 8, iw, ih);
+    });
+    museumGate.forEach(function (ex) { drawGate(ex, AREAS.museum); });
+    var moving = hasDir("up") || hasDir("down") || hasDir("left") || hasDir("right");
+    drawFrank(player.x, player.y, player.facing, player.phase, moving, time);
+    AREAS.museum.signs.forEach(drawSign);
+  }
+
+  function drawGateWalk(now) {
+    var p = Math.min(1, gateWalk.t / gateWalk.dur);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var sky = ctx.createLinearGradient(0, 0, 0, viewH);
+    sky.addColorStop(0, "#f3d48a");
+    sky.addColorStop(0.42, "#b9ddf2");
+    sky.addColorStop(1, "#d5e8b8");
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, viewW, viewH);
+    ctx.fillStyle = "#6fa05a";
+    blob(viewW * 0.22, viewH * 0.58, viewW * 0.28, 46, 3, 8);
+    ctx.fill();
+    ctx.fillStyle = "#8fbe70";
+    blob(viewW * 0.78, viewH * 0.56, viewW * 0.32, 42, 8, 8);
+    ctx.fill();
+    var groundY = viewH * 0.62;
+    var pathTop = groundY - LANE / 2;
+    var pathBot = groundY + LANE / 2;
+    ctx.fillStyle = "#3f8f3a";
+    ctx.fillRect(0, pathTop - 36, viewW, (pathBot - pathTop) + 150);
+    ctx.fillStyle = "#6b4a2a";
+    ctx.fillRect(0, pathTop - 6, viewW, (pathBot - pathTop) + 12);
+    ctx.fillStyle = "#e2c088";
+    ctx.fillRect(0, pathTop, viewW, pathBot - pathTop);
+    ctx.fillStyle = "#f6e4b8";
+    ctx.fillRect(0, pathTop + 8, viewW, pathBot - pathTop - 16);
+    var gateX = Math.min(viewW * 0.66, viewW - 96);
+    paintArchAcross(gateX, pathTop, pathBot);
+    var place = AREAS[gateWalk.ex.to].title;
+    var side = gateWalk.ex.side;
+    var label = side === "west" ? "← " + place : side === "north" ? place + " ↑" : place + " →";
+    ctx.font = "800 15px Nunito, Trebuchet MS, sans-serif";
+    var bw = Math.ceil(ctx.measureText(label).width) + 22;
+    var sx = gateX - 78 - bw / 2;
+    if (sx - bw / 2 < 12) sx = 12 + bw / 2;
+    var sy = Math.min(viewH - 36, pathBot + 78);
+    ctx.fillStyle = "#3f8f3a";
+    blob(sx, sy + 4, Math.max(36, bw * 0.42), 22, 4, 7);
+    ctx.fill();
+    drawWoodSign(sx, sy, label, 15);
+    bush({ x: 28, y: pathBot + 10, r: 22 });
+    var front = gateX - 156;
+    var fx = viewW * 0.16 + p * Math.max(0, front - viewW * 0.16);
+    drawFrank(fx, groundY + 6, "right", gateWalk.t * 11, true, now);
+  }
+
+  var groundPats = {};
+  function groundPattern(kind) {
+    if (groundPats[kind]) return groundPats[kind];
+    var c = document.createElement("canvas");
+    c.width = 140;
+    c.height = 140;
+    var g = c.getContext("2d");
+    var i;
+    var x;
+    var y;
+    if (kind === "desert") {
+      g.fillStyle = "#e4c07e";
+      g.fillRect(0, 0, 140, 140);
+      g.fillStyle = "#f0d7a4";
+      for (i = 0; i < 10; i++) {
+        g.beginPath();
+        g.ellipse((i * 41) % 140, (i * 29) % 140, 18, 7, i * 0.4, 0, Math.PI * 2);
+        g.fill();
+      }
+      g.fillStyle = "rgba(150, 96, 40, 0.28)";
+      for (i = 0; i < 16; i++) {
+        g.fillRect((i * 23) % 140, (i * 37) % 140, 2, 2);
+      }
+      g.strokeStyle = "rgba(176, 112, 52, 0.45)";
+      g.lineWidth = 2;
+      g.beginPath();
+      g.moveTo(0, 48);
+      g.quadraticCurveTo(50, 32, 110, 52);
+      g.moveTo(8, 108);
+      g.quadraticCurveTo(70, 90, 138, 112);
+      g.stroke();
+    } else if (kind === "jungle") {
+      g.fillStyle = "#1b6b32";
+      g.fillRect(0, 0, 140, 140);
+      for (i = 0; i < 14; i++) {
+        g.fillStyle = i % 2 ? "#145428" : "#3d9a44";
+        g.beginPath();
+        g.ellipse((i * 33) % 140, (i * 47) % 140, 12, 6, i * 0.8, 0, Math.PI * 2);
+        g.fill();
+      }
+      g.strokeStyle = "rgba(10, 40, 16, 0.35)";
+      g.lineWidth = 2;
+      for (i = 0; i < 8; i++) {
+        x = (i * 36) % 140;
+        y = (i * 22) % 140;
+        g.beginPath();
+        g.moveTo(x, y);
+        g.quadraticCurveTo(x + 8, y - 6, x + 4, y - 14);
+        g.stroke();
+      }
+    } else if (kind === "hollow") {
+      g.fillStyle = "#ddb87a";
+      g.fillRect(0, 0, 140, 140);
+      for (i = 0; i < 12; i++) {
+        g.fillStyle = i % 2 ? "rgba(110, 74, 36, 0.28)" : "rgba(255, 236, 200, 0.4)";
+        g.beginPath();
+        g.ellipse((i * 37) % 140, (i * 19) % 140, 5, 3, i, 0, Math.PI * 2);
+        g.fill();
+      }
+    } else {
+      var base = kind === "meadow" ? "#b7c85a" : kind === "safari" ? "#c9b15a" : "#62b244";
+      g.fillStyle = base;
+      g.fillRect(0, 0, 140, 140);
+      for (i = 0; i < 8; i++) {
+        g.fillStyle = i % 2 ? "rgba(255,255,220,0.16)" : "rgba(30,70,20,0.12)";
+        g.beginPath();
+        g.ellipse((i * 44) % 140, (i * 31) % 140, 16, 9, i * 0.5, 0, Math.PI * 2);
+        g.fill();
+      }
+      for (i = 0; i < 26; i++) {
+        x = (i * 29) % 140;
+        y = (i * 41) % 140;
+        g.strokeStyle = i % 3 ? "rgba(24, 78, 28, 0.45)" : "rgba(210, 230, 120, 0.55)";
+        g.lineWidth = 1.6;
+        g.beginPath();
+        g.moveTo(x, y);
+        g.quadraticCurveTo(x + 2, y - 8, x - 1, y - 13);
+        g.stroke();
+      }
+    }
+    groundPats[kind] = ctx.createPattern(c, "repeat");
+    return groundPats[kind];
+  }
+
+  var speckPat = null;
+  function speckPattern() {
+    if (speckPat) return speckPat;
+    var c = document.createElement("canvas");
+    c.width = 48;
+    c.height = 48;
+    var g = c.getContext("2d");
+    var i;
+    for (i = 0; i < 10; i++) {
+      g.fillStyle = i % 2 ? "rgba(255,255,255,0.16)" : "rgba(70,48,20,0.08)";
+      g.fillRect((i * 13) % 48, (i * 19) % 48, 2, 2);
+    }
+    speckPat = ctx.createPattern(c, "repeat");
+    return speckPat;
+  }
+
+  function vergeColor(kind) {
+    if (kind === "desert") return "#6aaa45";
+    if (kind === "jungle") return "#145c28";
+    if (kind === "hollow") return "#c4a46a";
+    if (kind === "safari") return "#8aaa48";
+    if (kind === "meadow") return "#7aaa3a";
+    return "#3f8f3a";
+  }
+
+  function expandLane(lane, pad) {
+    if (lane.horiz) return { x: lane.x, y: lane.y - pad, w: lane.w, h: lane.h + pad * 2 };
+    return { x: lane.x - pad, y: lane.y, w: lane.w + pad * 2, h: lane.h };
+  }
+
+  function fillRound(rect, radius) {
+    ctx.beginPath();
+    ctx.roundRect(rect.x, rect.y, rect.w, rect.h, radius);
+    ctx.fill();
+  }
+
+
+  function drawHabitat(h) {
+    var x = h.x + 78;
+    var y = h.y + 72;
+    if (!nearView(x, y, 160)) return;
+    ctx.save();
+    ctx.globalAlpha = 0.42;
+    ctx.fillStyle = h.wash || "#efe6b0";
+    blob(x + 30, y + 18, 92, 54, h.x * 0.02, 8);
+    ctx.fill();
+    ctx.restore();
+    var i;
+    if (h.kind === "flowers") {
+      for (i = 0; i < 10; i++) flower(x + (i % 5) * 28, y + ((i / 5) | 0) * 28, h.color, 1.25);
+    } else if (h.kind === "pond") {
+      drawPond({ x: x + 16, y: y + 10, r: 46 });
+    } else if (h.kind === "rocks") {
+      drawRock(x, y, 1.3);
+      drawRock(x + 48, y + 16, 1.05);
+      drawRock(x + 20, y + 38, 0.8);
+    } else if (h.kind === "ferns") {
+      drawFern(x, y, 1.25);
+      drawFern(x + 42, y + 8, 1.05);
+      drawFern(x + 18, y + 36, 0.9);
+    } else if (h.kind === "bones") {
+      ctx.fillStyle = "#f4ead4";
+      ctx.save();
+      ctx.translate(x + 10, y + 8);
+      ctx.rotate(0.5);
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 22, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.rotate(-1.2);
+      ctx.beginPath();
+      ctx.ellipse(18, 6, 16, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    } else if (h.kind === "nest") {
+      ctx.fillStyle = "#a97444";
+      ctx.beginPath();
+      ctx.ellipse(x + 8, y + 10, 36, 14, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#6b4424";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(x - 6, y + 8, 14, 0.2, 2.6);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(x + 22, y + 12, 13, 0.7, 3.3);
+      ctx.stroke();
+    } else {
+      tuft(x, y, 1.45, h.color || "#6a9a32");
+      tuft(x + 30, y + 8, 1.2, h.color || "#6a9a32");
+      tuft(x + 14, y + 28, 1.35, h.color || "#6a9a32");
+      tuft(x + 46, y + 26, 1.1, h.color || "#6a9a32");
+    }
+  }
+
+  function drawBarrierRuns(area) {
+    var rock = area.kind === "hollow" || area.kind === "desert";
+    var runs = area.barriers || [];
+    var i;
+    for (i = 0; i < runs.length; i++) {
+      var run = runs[i];
+      var reach = 32;
+      var bite = 18;
+      var x;
+      var y;
+      var w;
+      var h;
+      if (run.horiz) {
+        x = run.a0;
+        w = Math.max(8, run.a1 - run.a0);
+        if (run.outward < 0) { y = run.fixed - reach; h = reach + bite; }
+        else { y = run.fixed - bite; h = reach + bite; }
+      } else {
+        y = run.a0;
+        h = Math.max(8, run.a1 - run.a0);
+        if (run.outward < 0) { x = run.fixed - reach; w = reach + bite; }
+        else { x = run.fixed - bite; w = reach + bite; }
+      }
+      if (x + w < camX - 30 || x > camX + viewW + 30 || y + h < camY - 30 || y > camY + viewH + 30) continue;
+      ctx.fillStyle = rock ? "#6d4c34" : "#174e22";
+      ctx.beginPath();
+      ctx.roundRect(x, y, w, h, 8);
+      ctx.fill();
+      ctx.fillStyle = rock ? "#c6a27c" : (area.kind === "jungle" ? "#1e6a30" : "#2f7a34");
+      ctx.beginPath();
+      ctx.roundRect(x + 3, y + 3, Math.max(4, w - 6), Math.max(4, h - 6), 6);
+      ctx.fill();
+      ctx.fillStyle = rock ? "#a07850" : "#145c28";
+      ctx.beginPath();
+      ctx.arc(run.horiz ? run.a0 : run.fixed, run.horiz ? run.fixed : run.a0, 16, 0, Math.PI * 2);
+      ctx.arc(run.horiz ? run.a1 : run.fixed, run.horiz ? run.fixed : run.a1, 16, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function drawMaze(area) {
+    if (!area.corridors || !area.corridors.length) return;
+    var rects = [];
+    area.corridors.forEach(function (r) {
+      if (r.x + r.w < camX - 40 || r.x > camX + viewW + 40 || r.y + r.h < camY - 40 || r.y > camY + viewH + 40) return;
+      rects.push(r);
+    });
+    ctx.fillStyle = "#6b4a2a";
+    rects.forEach(function (r) { fillRound(r, 10); });
+    ctx.fillStyle = area.path || "#e2c088";
+    rects.forEach(function (r) {
+      fillRound({ x: r.x + 5, y: r.y + 5, w: Math.max(4, r.w - 10), h: Math.max(4, r.h - 10) }, 8);
+    });
+    ctx.fillStyle = area.pathIn || "#f6e4b8";
+    rects.forEach(function (r) {
+      fillRound({ x: r.x + 12, y: r.y + 12, w: Math.max(4, r.w - 24), h: Math.max(4, r.h - 24) }, 6);
+    });
+  }
+
+  function nearView(x, y, pad) {
+    return x >= camX - pad && x <= camX + viewW + pad && y >= camY - pad && y <= camY + viewH + pad;
+  }
+
+  var MEADOW_TRACK = [
+    [25, 920], [97, 925], [195, 926], [281, 909], [358, 873], [438, 828],
+    [520, 772], [608, 711], [709, 669], [824, 642], [938, 625], [1044, 626],
+    [1144, 632], [1227, 608], [1296, 557], [1344, 500], [1361, 443], [1360, 385],
+    [1361, 333], [1361, 281], [1359, 259], [1356, 293], [1350, 358], [1329, 423],
+    [1286, 494], [1281, 562], [1357, 624], [1474, 680], [1586, 723], [1703, 754],
+    [1812, 781], [1909, 810], [1994, 838], [2061, 867], [2106, 898], [2159, 920],
+    [2250, 925], [2344, 921], [2375, 920]
+  ];
+
+  function drawWornPath() {
+    function stroke(width, color) {
+      ctx.lineWidth = width;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.strokeStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(MEADOW_TRACK[0][0], MEADOW_TRACK[0][1]);
+      var i;
+      for (i = 1; i < MEADOW_TRACK.length; i++) ctx.lineTo(MEADOW_TRACK[i][0], MEADOW_TRACK[i][1]);
+      ctx.stroke();
+    }
+    stroke(188, "rgba(154, 132, 62, 0.92)");
+    stroke(108, "rgba(138, 86, 42, 0.96)");
+  }
+
+  function drawWild(area, time) {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = area.ground;
+    ctx.fillRect(0, 0, viewW, viewH);
+    var cam = wildCam(area);
+    ctx.setTransform(dpr * cam.sc, 0, 0, dpr * cam.sc, dpr * cam.ox, dpr * cam.oy);
+    camX = cam.camX;
+    camY = cam.camY;
+    var plate = imgs[area.plate];
+    if (plate && plate.naturalWidth) ctx.drawImage(plate, 0, 0, area.w, area.h);
+    if (area.id === "meadow") drawWornPath();
+    if (area.id === "hollow" && area.trail) {
+      var ti;
+      for (ti = 0; ti < area.trail.length; ti++) drawPrint(area.trail[ti][0], area.trail[ti][1], 0);
+    }
+    (area.blooms || []).forEach(function (b) {
+      if (!picked.has(b.id)) flower(b.x, b.y, b.color, 1.6);
+    });
+    var moving = !!cape || hasDir("up") || hasDir("down") || hasDir("left") || hasDir("right");
+    var items = [];
+    area.creatures.forEach(function (c) {
+      items.push({ y: shownSpot(c).y, draw: function () { drawCreature(c, time); } });
+    });
+    items.push({
+      y: player.y,
+      draw: function () {
+        drawFrank(player.x, player.y, player.facing, player.phase, moving, time);
+      }
+    });
+    items.sort(function (a, b) { return a.y - b.y; });
+    items.forEach(function (item) { item.draw(); });
+    area.signs.forEach(drawSign);
+  }
+
+  function drawWorld(time) {
+    var area = areaNow();
+    if (area.plate) {
+      drawWild(area, time);
+      return;
+    }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = area.ground;
+    ctx.fillRect(0, 0, viewW, viewH);
+    var maxX = Math.max(0, area.w - viewW);
+    var maxY = Math.max(0, area.h - viewH);
+    var tx = clamp(player.x - viewW / 2, 0, maxX);
+    var ty = clamp(player.y - viewH / 2, 0, maxY);
+    camX = tx;
+    camY = ty;
+    ctx.translate(-camX, -camY);
+    if (area.kind === "museum") {
+      drawMuseumRoom(time);
+      return;
+    }
+
+    var groundTex = groundPattern(area.kind);
+    if (groundTex) {
+      ctx.fillStyle = groundTex;
+      ctx.fillRect(0, 0, area.w, area.h);
+    }
+    ctx.fillStyle = area.groundAlt;
+    ctx.globalAlpha = 0.28;
+    area.blobs.forEach(function (p) {
+      blob(p.x, p.y, p.rx, p.ry, p.x * 0.01 + p.y, 9);
+      ctx.fill();
+    });
+    if (area.kind === "desert") {
+      ctx.strokeStyle = "rgba(176, 122, 62, 0.35)";
+      ctx.lineWidth = 3;
+      ctx.lineCap = "round";
+      var dune;
+      for (dune = 0; dune < 6; dune++) {
+        var dx = 90 + dune * 180;
+        var dy = 180 + (dune % 3) * 220;
+        ctx.beginPath();
+        ctx.moveTo(dx, dy);
+        ctx.quadraticCurveTo(dx + 70, dy - 36, dx + 150, dy + 8);
+        ctx.stroke();
+      }
+    }
+    ctx.globalAlpha = 1;
+
+    if (area.kind === "garden") {
+      ctx.fillStyle = "#c4a06a";
+      var row;
+      for (row = 0; row < 3; row++) {
+        ctx.beginPath();
+        ctx.roundRect(250, 620 + row * 28, 130, 16, 6);
+        ctx.fill();
+        ctx.fillStyle = "#3d9a40";
+        var k;
+        for (k = 0; k < 5; k++) {
+          blob(268 + k * 24, 624 + row * 28, 9, 6, 40 + row * 5 + k, 6);
+          ctx.fill();
+          ctx.fillStyle = "#67b85a";
+          blob(266 + k * 24, 621 + row * 28, 5, 3, 80 + k, 5);
+          ctx.fill();
+          ctx.fillStyle = "#3d9a40";
+        }
+        ctx.fillStyle = "#c4a06a";
+      }
+    }
+
+    area.tufts.forEach(function (t) { if (nearView(t.x, t.y, 40)) tuft(t.x, t.y, t.s, area.tuft); });
+    area.flowers.forEach(function (f) { if (nearView(f.x, f.y, 30)) flower(f.x, f.y, f.c, f.s); });
+    area.extras.forEach(function (e) {
+      if (!nearView(e.x, e.y, 50)) return;
+      if (e.k === "rock") drawRock(e.x, e.y, e.s);
+      else if (e.k === "fern") drawFern(e.x, e.y, e.s);
+      else drawPrint(e.x, e.y, e.rot);
+    });
+
+    drawMaze(area);
+    drawBarrierRuns(area);
+    (area.habitats || []).forEach(drawHabitat);
+    if (area.id === "hollow") drawPteroTrail();
+    (area.blooms || []).forEach(function (b) {
+      if (picked.has(b.id) || !nearView(b.x, b.y, 40)) return;
+      flower(b.x, b.y, b.color, 1.35);
+    });
+    area.blocks.forEach(function (b) { if (b.pond) drawPond(b); });
+
+    var moving = !!cape || hasDir("up") || hasDir("down") || hasDir("left") || hasDir("right");
+    var items = [];
+    area.bushes.forEach(function (b) {
+      if (!nearView(b.x, b.y, 80)) return;
+      items.push({ y: b.y, draw: function () { bush(b); } });
+    });
+    (area.walls || []).forEach(function (w) {
+      if (!nearView(w.x, w.y, 80)) return;
+      items.push({
+        y: w.y,
+        draw: function () {
+          if (w.k === "rock") drawRock(w.x, w.y, w.s);
+          else if (w.k === "tree") drawTree(w.x, w.y, w.s);
+          else if (w.k === "fern") drawFern(w.x, w.y, w.s);
+          else bush({ x: w.x, y: w.y, r: w.r });
+        }
+      });
+    });
+    area.creatures.forEach(function (c) {
+      items.push({ y: shownSpot(c).y, draw: function () { drawCreature(c, time); } });
+    });
+    area.exits.forEach(function (ex) {
+      var foot = (ex.side === "north" || ex.side === "south") ? 176 : PATH_Y + LANE / 2;
+      items.push({ y: foot, draw: function () { drawGate(ex, area); } });
+    });
+    items.push({
+      y: player.y,
+      draw: function () {
+        drawFrank(player.x, player.y, player.facing, player.phase, moving, time);
+      }
+    });
+    items.sort(function (a, b) { return a.y - b.y; });
+    items.forEach(function (item) { item.draw(); });
+    area.signs.forEach(drawSign);
+  }
+
+  function tickMotions(dt) {
+    ORDER.forEach(function (id) {
+      AREAS[id].creatures.forEach(function (c) {
+        if (c.hop) {
+          c.hop.t += dt;
+          if (c.hop.t >= c.hop.dur) c.hop = null;
+        }
+        if (c.wave) {
+          c.wave.t += dt;
+          if (c.wave.t >= c.wave.dur) c.wave = null;
+        }
+      });
+    });
+    if (notice) {
+      notice.t += dt;
+      var near = nearest();
+      if (!near || near.id !== notice.id || seen.has(notice.id)) notice = null;
+      else if (notice.t >= 0.85) {
+        var who = near;
+        notice = null;
+        greeted = who.id;
+        showQuestion(who);
+      }
+    }
+    if (cheerUntil && performance.now() > cheerUntil) {
+      cheerUntil = 0;
+      if (shownId === "medal") {
+        meet.hidden = true;
+        shownId = null;
+      }
+    }
+  }
+
+  function update(dt) {
+    if (titleOn) return;
+    tickMotions(dt);
+    tickClears(dt);
+    if (gateWalk) {
+      gateWalk.t += dt;
+      stepAcc += dt;
+      if (stepAcc > 0.36) {
+        stepAcc = 0;
+        playFoot();
+      }
+      if (gateWalk.t >= gateWalk.dur) {
+        var ex = gateWalk.ex;
+        gateWalk = null;
+        arrive(ex);
+      }
+      return;
+    }
+    if (cape) {
+      cape.t += dt;
+      var p = Math.min(1, cape.t / cape.dur);
+      var lift = Math.sin(p * Math.PI);
+      player.x = cape.fromX + lift * 42;
+      player.y = cape.fromY - lift * 30;
+      player.facing = "right";
+      player.phase += dt * 11;
+      stepAcc += dt;
+      if (stepAcc > 0.34) {
+        stepAcc = 0;
+        playFoot();
+      }
+      player.pose = frankFrame(true);
+      if (p >= 1) {
+        player.x = cape.fromX;
+        player.y = cape.fromY;
+        cape = null;
+        capeDone = true;
+        persist();
+        var ptero = null;
+        AREAS.hollow.creatures.forEach(function (c) {
+          if (c.id === "pterosaur") ptero = c;
+        });
+        if (ptero) showHello(ptero, true);
+      }
+      return;
+    }
+    var ax = 0;
+    var ay = 0;
+    if (!journalOpen && !mapOpen) {
+      if (hasDir("left")) ax -= 1;
+      if (hasDir("right")) ax += 1;
+      if (hasDir("up")) ay -= 1;
+      if (hasDir("down")) ay += 1;
+    }
+    if (ax === 0 && ay === 0 && !heldKeys.size && !heldTouch.size && finger && !journalOpen && !mapOpen) {
+      var dx = finger.x - player.x;
+      var dy = finger.y - player.y;
+      var dist = Math.hypot(dx, dy);
+      if (dist > 26) {
+        ax = dx / dist;
+        ay = dy / dist;
+      }
+    }
+    var moving = ax !== 0 || ay !== 0;
+    if (moving) {
+      var len = Math.hypot(ax, ay);
+      ax /= len;
+      ay /= len;
+      if (ax > 0) player.facing = "right";
+      else if (ax < 0) player.facing = "left";
+      player.phase += dt * 11;
+      stepAcc += dt;
+      if (stepAcc > 0.34) {
+        stepAcc = 0;
+        playFoot();
+      }
+      var nx = player.x + ax * SPEED * dt;
+      var ny = player.y + ay * SPEED * dt;
+      if (!hits(nx, player.y)) player.x = nx;
+      if (!hits(player.x, ny)) player.y = ny;
+    }
+    var area = areaNow();
+    player.pose = frankFrame(moving);
+    player.x = clamp(player.x, 28, area.w - 28);
+    player.y = clamp(player.y, 28, area.h - 28);
+    for (var i = 0; i < area.exits.length; i++) {
+      var ex = area.exits[i];
+      if (ex.to === "museum" && !capeDone) continue;
+      if (ex.side === "east" || ex.side === "west") {
+        if (player.y <= ex.y0 || player.y >= ex.y1) continue;
+        if (ex.side === "east" && player.x > area.w - 46) { beginGate(ex); break; }
+        if (ex.side === "west" && player.x < 46) { beginGate(ex); break; }
+      } else if (ex.side === "north" || ex.side === "south") {
+        if (player.x <= ex.x0 || player.x >= ex.x1) continue;
+        if (ex.side === "north" && player.y < 46) { beginGate(ex); break; }
+        if (ex.side === "south" && player.y > area.h - 46) { beginGate(ex); break; }
+      }
+    }
+    if (area.blooms) {
+      area.blooms.forEach(function (b) {
+        if (picked.has(b.id)) return;
+        if (Math.hypot(b.x - player.x, b.y - player.y) < 110) {
+          picked.add(b.id);
+          persist();
+          if (journalOpen) renderJournal();
+        }
+      });
+    }
+    maybeEnding();
+    updateMeet();
+    sayShutDoor(area);
+    stepSave += dt;
+    if (stepSave > 1.6) {
+      stepSave = 0;
+      persist();
+    }
+  }
+
+  var stepSave = 0;
+
+  function frame(now) {
+    var dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    update(dt);
+    if (titleOn) {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.fillStyle = "#cfe6b0";
+      ctx.fillRect(0, 0, viewW, viewH);
+    } else if (gateWalk) drawGateWalk(now);
+    else drawWorld(now);
+    requestAnimationFrame(frame);
+  }
+  if (window.speechSynthesis && window.speechSynthesis.getVoices) {
+    window.speechSynthesis.getVoices();
+  }
+  var titleScreen = document.getElementById("titleScreen");
+  var newGameBtn = document.getElementById("newGame");
+  var continueBtn = document.getElementById("continueGame");
+  var muteBtn = document.getElementById("muteBtn");
+
+  function paintMute() {
+    muteBtn.textContent = muted ? "Muted" : "Sound";
+    muteBtn.setAttribute("aria-pressed", muted ? "true" : "false");
+  }
+
+  function enterGame() {
+    titleOn = false;
+    titleScreen.hidden = true;
+    placeName.textContent = areaNow().title;
+    stage.style.background = areaNow().ground;
+    snap = true;
+    shownId = null;
+    meet.hidden = true;
+    persist();
+    startMusic();
+    paintHud();
+    renderPlaceList();
+  }
+
+  function paintContinue() {
+    var ok = hasContinue();
+    continueBtn.disabled = !ok;
+  }
+
+  paintMute();
+  paintContinue();
+
+  newGameBtn.addEventListener("click", function () {
+    if (!window.confirm("Start a new game? This empties the journal.")) return;
+    audio();
+    seen.clear();
+    picked.clear();
+    endingDone = false;
+    endingOn = false;
+    cape = null;
+    capeDone = false;
+    gateWalk = null;
+    ORDER.forEach(function (id) {
+      AREAS[id].creatures.forEach(function (c) { c.clearing = null; });
+    });
+    player.area = "garden";
+    player.x = 160;
+    player.y = PATH_Y;
+    player.facing = "right";
+    player.pose = "idle";
+    enterGame();
+  });
+
+  continueBtn.addEventListener("click", function () {
+    if (!hasContinue()) return;
+    audio();
+    var data = stored;
+    seen.clear();
+    picked.clear();
+    (data.seen || []).forEach(function (id) { seen.add(id); });
+    (data.flowers || []).forEach(function (id) { picked.add(id); });
+    endingDone = !!data.endingDone;
+    endingOn = false;
+    player.area = AREAS[data.area] ? data.area : "garden";
+    player.x = typeof data.x === "number" ? data.x : 160;
+    player.y = typeof data.y === "number" ? data.y : PATH_Y;
+    if (!insideMaze(areaNow(), player.x, player.y)) {
+      var home = areaNow().home || { x: 220, y: 920 };
+      player.x = home.x;
+      player.y = home.y;
+    }
+    player.facing = data.facing === "left" ? "left" : "right";
+    capeDone = !!data.capeDone;
+    cape = null;
+    gateWalk = null;
+    muted = !!data.mute;
+    paintMute();
+    enterGame();
+  });
+
+  muteBtn.addEventListener("click", function () {
+    muted = !muted;
+    paintMute();
+    if (muted) stopMusic();
+    else {
+      audio();
+      startMusic();
+    }
+    persist();
+  });
+
+  titleScreen.addEventListener("pointerdown", function () {
+    if (!muted && !musicOn) startMusic();
+  });
+
+  requestAnimationFrame(frame);
+
+  window.__sf = {
+    state: function () {
+      return {
+        area: player.area,
+        x: Math.round(player.x),
+        y: Math.round(player.y),
+        facing: player.facing,
+        pose: player.pose || "idle",
+        seen: Array.from(seen),
+        ready: imagesReady,
+        meet: meet.hidden ? "" : meetName.textContent,
+        ask: meet.hidden ? "" : meetAsk.textContent,
+        word: meet.hidden ? "" : meetWord.textContent,
+        tag: meet.hidden ? "" : meetTag.textContent,
+        journal: journalOpen,
+        phase: quiz ? quiz.phase : "",
+        listen: !listenBtn.hidden,
+        slots: slotsEl.childElementCount,
+        choices: choicesEl.textContent,
+        clearing: (function () {
+          var id = "";
+          ORDER.forEach(function (areaId) {
+            AREAS[areaId].creatures.forEach(function (c) { if (c.clearing) id = c.id; });
+          });
+          return id;
+        })(),
+        cape: cape ? "play" : (capeDone ? "done" : ""),
+        limit: areaNow().w,
+        title: titleOn,
+        muted: muted,
+        music: musicOn,
+        gate: gateWalk ? "play" : ""
+      };
+    },
+    hitsAt: function (x, y) { return hits(x, y); },
+    friends: function () {
+      return areaNow().creatures.map(function (c) { return { id: c.id, x: c.x, y: c.y }; });
+    },
+    corridors: function () {
+      var area = areaNow();
+      return (area.corridors || []).map(function (r) { return { x: r.x, y: r.y, w: r.w, h: r.h }; });
+    },
+    place: function (id, x, y) {
+      if (!AREAS[id]) return;
+      player.area = id;
+      player.x = x;
+      player.y = y;
+      titleOn = false;
+      titleScreen.hidden = true;
+      placeName.textContent = AREAS[id].title;
+      stage.style.background = AREAS[id].ground;
+      renderPlaceList();
+    },
+    paintWorld: function (id) {
+      var area = AREAS[id];
+      var prev = { area: player.area, x: player.x, y: player.y, vw: viewW, vh: viewH, d: dpr };
+      var off = document.createElement("canvas");
+      off.width = area.w;
+      off.height = area.h;
+      var saved = ctx;
+      player.area = id;
+      player.x = area.w / 2;
+      player.y = area.h / 2;
+      viewW = area.w;
+      viewH = area.h;
+      dpr = 1;
+      ctx = off.getContext("2d");
+      drawWorld(0);
+      ctx = saved;
+      player.area = prev.area;
+      player.x = prev.x;
+      player.y = prev.y;
+      viewW = prev.vw;
+      viewH = prev.vh;
+      dpr = prev.d;
+      return off;
+    }
+  };
+})();
+</script>
+</body>
+</html>
